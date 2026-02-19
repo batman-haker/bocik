@@ -175,8 +175,10 @@
 </div>
 
 <script>
-const API_STATE = '/api/state';
-const API_HISTORY = '/api/history';
+// Relative paths — works behind reverse proxy (nginx /arb-bot/)
+const _B = window.location.pathname.replace(/\/$/, '');
+const API_STATE = _B + '/api/state';
+const API_HISTORY = _B + '/api/history';
 let nextPollAt = 0;
 let spreadChart = null, pnlChart = null;
 
