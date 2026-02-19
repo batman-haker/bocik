@@ -1,0 +1,70 @@
+system:
+  mode: "shadow"              # "shadow" or "live"
+  poll_interval_seconds: 3600    # 1 hour
+  log_level: "INFO"
+  log_dir: "logs"
+  shadow_trades_dir: "shadow_trades"
+
+exchanges:
+  hyperliquid:
+    enabled: true
+    max_concurrent_requests: 3
+    min_order_size_usd: 10.0
+  dydx:
+    enabled: true
+    max_concurrent_requests: 3
+    min_order_size_usd: 10.0
+  aevo:
+    enabled: true
+    max_concurrent_requests: 2
+    min_order_size_usd: 10.0
+  drift:
+    enabled: false
+    scaling_factor: 1.0       # Adjust after empirical validation
+    max_concurrent_requests: 2
+    min_order_size_usd: 10.0
+
+coins:
+  active:
+    # Profitable from backtest — high spread, low churn
+    # Meme/high-vol (extreme funding spreads)
+    - HYPE
+    - FARTCOIN
+    - TRUMP
+    - PENGU
+    - SPX
+    - MOODENG
+    - WIF
+    - POPCAT
+    - PNUT
+    # TradFi (stable spreads between HL + Aevo)
+    - SILVER
+    - GOLD
+    - COPPER
+    - PLATINUM
+    # Keep majors for monitoring only (high spread moments)
+    - BTC
+    - ETH
+    - SOL
+    - SUI
+    - DOGE
+
+strategy:
+  min_spread_annualized_pct: 10.0   # v3c: lowered from 15% for more trades
+  expected_holding_days: 14          # v3c: extended from 7d
+  slippage_pct_per_leg: 0.02        # v3c: tighter with limit orders (was 0.03)
+  z_score_threshold: 1.5
+  use_maker_orders: true
+
+risk:
+  max_position_usd: 15000.0          # v3c: was 10k — bigger positions
+  max_exposure_per_coin_usd: 15000.0  # v3c: was 10k
+  max_exposure_per_exchange_usd: 50000.0  # v3c: was 20k — use more capital
+  max_leverage: 2.0                   # v3c: 2x leverage (best risk/reward)
+  min_margin_ratio: 0.15
+  max_daily_loss_pct: 5.0
+  min_hold_hours: 48.0               # v3c: never exit before 48h
+  soft_max_age_hours: 336.0          # v3c: 14d — exit only if unprofitable
+  hard_max_age_hours: 504.0          # v3c: 21d — always exit
+  flip_patience_hours: 72.0          # v3c: wait 72h before exiting on flip
+  spread_collapse_threshold_pct: 15.0  # v3c: 15% of entry spread (rolling avg)

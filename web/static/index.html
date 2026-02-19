@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Funding Rate Arbitrage Bot</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
+    --border: #30363d; --text: #c9d1d9; --text2: #8b949e;
+    --green: #3fb950; --red: #f85149; --yellow: #d29922;
+    --blue: #58a6ff; --purple: #bc8cff; --orange: #f0883e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+
+  .header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header h1 span { color: var(--blue); }
+  .header-stats { display: flex; gap: 20px; font-size: 12px; color: var(--text2); }
+  .header-stats .value { color: var(--text); font-weight: 600; }
+
+  .status-bar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 6px 24px; display: flex; gap: 24px; font-size: 11px; color: var(--text2); align-items: center; }
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .dot-shadow { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+  .dot-live { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot-offline { background: var(--red); }
+
+  /* Summary cards */
+  .summary-row { display: flex; gap: 12px; padding: 16px 24px 0; }
+  .summary-card { flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .summary-card .label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .summary-card .big { font-size: 24px; font-weight: 700; }
+  .summary-card .sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .pnl-pos { color: var(--green); }
+  .pnl-neg { color: var(--red); }
+  .pnl-zero { color: var(--text2); }
+
+  .content { padding: 12px 24px 24px; max-width: 1440px; margin: 0 auto; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .grid-full { grid-column: 1 / -1; }
+
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .card-header { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
+  .card-body { padding: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; padding: 6px 10px; background: var(--bg3); color: var(--text2); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; position: sticky; top: 0; }
+  th.r, td.r { text-align: right; }
+  td { padding: 5px 10px; border-top: 1px solid var(--border); white-space: nowrap; }
+  tr:hover { background: rgba(88,166,255,0.04); }
+
+  .rate-pos { color: var(--green); }
+  .rate-neg { color: var(--red); }
+  .rate-zero { color: var(--text2); }
+  .rate-na { color: var(--text2); font-style: italic; }
+  .spread-high { color: var(--yellow); font-weight: 700; }
+  .spread-extreme { color: var(--red); font-weight: 700; }
+
+  .badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; }
+  .badge-high { background: rgba(63,185,80,0.15); color: var(--green); }
+  .badge-medium { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .badge-low { background: rgba(248,81,73,0.15); color: var(--red); }
+
+  .trend-up { color: var(--green); }
+  .trend-down { color: var(--red); }
+  .trend-flat { color: var(--text2); }
+
+  .side-long { color: var(--green); font-weight: 600; }
+  .side-short { color: var(--red); font-weight: 600; }
+
+  #countdown { font-family: 'Courier New', monospace; font-weight: 600; color: var(--blue); }
+
+  .table-scroll { max-height: 420px; overflow-y: auto; }
+  .chart-wrap { padding: 12px; height: 220px; }
+  .empty { padding: 24px; text-align: center; color: var(--text2); font-size: 13px; }
+
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+  .tab { padding: 8px 16px; font-size: 12px; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } .summary-row { flex-wrap: wrap; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>Funding Rate</span> Arbitrage Bot</h1>
+  <div class="header-stats">
+    <div>Cycle <span class="value" id="h-cycle">-</span></div>
+    <div>Uptime <span class="value" id="h-uptime">-</span></div>
+    <div>Next poll <span class="value" id="countdown">--:--</span></div>
+  </div>
+</div>
+<div class="status-bar">
+  <div><span class="status-dot dot-offline" id="status-dot"></span><span id="status-text">Connecting...</span></div>
+  <div>Last update: <span id="last-update">-</span></div>
+  <div>Coins: <span id="h-coins">-</span></div>
+  <div>Exchanges: <span id="h-exchanges">-</span></div>
+</div>
+
+<!-- Summary cards -->
+<div class="summary-row">
+  <div class="summary-card">
+    <div class="label">Estimated P&L (funding)</div>
+    <div class="big" id="total-pnl">$0.00</div>
+    <div class="sub" id="pnl-sub">Shadow mode</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">Total Exposure</div>
+    <div class="big" id="total-exposure">$0</div>
+    <div class="sub" id="exposure-sub">0 positions</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">Active Signals</div>
+    <div class="big" id="signal-count-big">0</div>
+    <div class="sub" id="signal-sub">-</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">Top Spread</div>
+    <div class="big" id="top-spread">-</div>
+    <div class="sub" id="top-spread-sub">-</div>
+  </div>
+</div>
+
+<div class="content">
+  <!-- Charts row -->
+  <div class="grid">
+    <div class="card">
+      <div class="card-header">Spread History (Top 5 Coins)</div>
+      <div class="card-body"><div class="chart-wrap"><canvas id="spread-chart"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">P&L History</div>
+      <div class="card-body"><div class="chart-wrap"><canvas id="pnl-chart"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- Positions -->
+  <div class="grid">
+    <div class="card grid-full">
+      <div class="card-header">Open Positions <span id="position-count">0</span></div>
+      <div class="card-body"><div id="positions-content" class="empty">No open positions</div></div>
+    </div>
+  </div>
+
+  <!-- Strategy Comparison: New vs Old -->
+  <div class="grid">
+    <div class="card">
+      <div class="card-header" style="background:rgba(63,185,80,0.08);">
+        NEW Strategy (Optimized) <span id="signal-count">0</span>
+        <span style="font-size:10px;color:var(--text2);font-weight:400;">min_spread=15% | maker fees | z&gt;1.5</span>
+      </div>
+      <div class="card-body"><div class="table-scroll" id="signals-content" class="empty">Waiting for data...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header" style="background:rgba(248,81,73,0.08);">
+        OLD Strategy (Original) <span id="signal-old-count">0</span>
+        <span style="font-size:10px;color:var(--text2);font-weight:400;">min_spread=5% | taker fees | z&gt;1.5</span>
+      </div>
+      <div class="card-body"><div class="table-scroll" id="signals-old-content" class="empty">Waiting for data...</div></div>
+    </div>
+  </div>
+
+  <!-- Rates table -->
+  <div class="grid">
+    <div class="card grid-full">
+      <div class="card-header">Funding Rates (Annualized %) <span id="rates-count">0</span></div>
+      <div class="card-body"><div class="table-scroll" id="rates-table-wrap"><div class="empty">Waiting...</div></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_STATE = '/api/state';
+const API_HISTORY = '/api/history';
+let nextPollAt = 0;
+let spreadChart = null, pnlChart = null;
+
+const COLORS = ['#58a6ff','#f0883e','#3fb950','#f85149','#bc8cff','#d29922','#8b949e','#79c0ff'];
+
+function fmtRate(v) {
+  if (v===null||v===undefined) return '<span class="rate-na">---</span>';
+  const c = v>0.5?'rate-pos':v<-0.5?'rate-neg':'rate-zero';
+  return `<span class="${c}">${v>=0?'+':''}${v.toFixed(1)}%</span>`;
+}
+function fmtSpread(v) {
+  if (v>20) return `<span class="spread-extreme">${v.toFixed(1)}%</span>`;
+  if (v>5) return `<span class="spread-high">${v.toFixed(1)}%</span>`;
+  return `${v.toFixed(1)}%`;
+}
+function fmtUsd(v) { return '$'+v.toLocaleString('en-US',{maximumFractionDigits:0}); }
+function fmtPnl(v) {
+  const c = v>0.01?'pnl-pos':v<-0.01?'pnl-neg':'pnl-zero';
+  return `<span class="${c}">${v>=0?'+':''}$${Math.abs(v).toFixed(2)}</span>`;
+}
+function trendIcon(t) {
+  if (t==='expanding') return '<span class="trend-up">&#9650;</span>';
+  if (t==='contracting') return '<span class="trend-down">&#9660;</span>';
+  return '<span class="trend-flat">&#9654;</span>';
+}
+function badgeHtml(c) {
+  const cls={HIGH:'badge-high',MEDIUM:'badge-medium',LOW:'badge-low'}[c]||'';
+  return `<span class="badge ${cls}">${c}</span>`;
+}
+
+function buildSignalsTable(signals) {
+  if (!signals||!signals.length) return '<div class="empty">No active signals</div>';
+  let h='<table><thead><tr><th>Coin</th><th>Long</th><th>Short</th><th class="r">Spread</th><th class="r">Trend</th><th class="r">Z</th><th class="r">Net</th><th>Conf</th></tr></thead><tbody>';
+  for (const s of signals) {
+    h+=`<tr><td><strong>${s.coin}</strong></td>
+      <td>${s.long_exchange} (${fmtRate(s.long_rate)})</td>
+      <td>${s.short_exchange} (${fmtRate(s.short_rate)})</td>
+      <td class="r">${fmtSpread(s.spread)}</td>
+      <td class="r">${trendIcon(s.trend)} <small>${s.avg_8h||'-'}/${s.avg_24h||'-'}</small></td>
+      <td class="r">${s.z_score.toFixed(2)}</td>
+      <td class="r">${s.net_return.toFixed(3)}%</td>
+      <td>${badgeHtml(s.confidence)}</td></tr>`;
+  }
+  return h+'</tbody></table>';
+}
+
+function buildPositionsTable(positions) {
+  if (!positions||!positions.length) return '<div class="empty">No open positions</div>';
+  let h='<table><thead><tr><th>Coin</th><th>Side</th><th>Exchange</th><th class="r">Size</th><th class="r">Rate</th><th class="r">P&L</th><th class="r">Age</th></tr></thead><tbody>';
+  for (const p of positions) {
+    const sc = p.side==='long'?'side-long':'side-short';
+    h+=`<tr><td><strong>${p.coin}</strong></td>
+      <td><span class="${sc}">${p.side.toUpperCase()}</span></td>
+      <td>${p.exchange}</td>
+      <td class="r">${fmtUsd(p.size_usd)}</td>
+      <td class="r">${fmtRate(p.current_rate)}</td>
+      <td class="r">${fmtPnl(p.funding_pnl_usd||0)}</td>
+      <td class="r">${p.age_hours.toFixed(1)}h</td></tr>`;
+  }
+  return h+'</tbody></table>';
+}
+
+function buildRatesTable(rates, spreads, exchanges) {
+  if (!rates||!Object.keys(rates).length) return '<div class="empty">Waiting...</div>';
+  const exL=(exchanges||[]).sort();
+  const coins=Object.keys(rates).sort((a,b)=>(spreads[b]||0)-(spreads[a]||0));
+  let h='<table><thead><tr><th>Coin</th>';
+  for (const e of exL) h+=`<th class="r">${e}</th>`;
+  h+='<th class="r">Spread</th></tr></thead><tbody>';
+  for (const c of coins) {
+    h+=`<tr><td><strong>${c}</strong></td>`;
+    for (const e of exL) { const v=rates[c]?rates[c][e]:null; h+=`<td class="r">${fmtRate(v)}</td>`; }
+    h+=`<td class="r">${fmtSpread(spreads[c]||0)}</td></tr>`;
+  }
+  return h+'</tbody></table>';
+}
+
+function initCharts() {
+  const commonOpts = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#8b949e', font: { size: 10 } }, position: 'top' } },
+    scales: {
+      x: { ticks: { color: '#8b949e', font: { size: 9 }, maxTicksLimit: 8 }, grid: { color: '#21262d' } },
+      y: { ticks: { color: '#8b949e', font: { size: 9 } }, grid: { color: '#21262d' } },
+    },
+  };
+  spreadChart = new Chart(document.getElementById('spread-chart'), {
+    type: 'line',
+    data: { labels: [], datasets: [] },
+    options: { ...commonOpts, plugins: { ...commonOpts.plugins, legend: { ...commonOpts.plugins.legend } },
+      scales: { ...commonOpts.scales, y: { ...commonOpts.scales.y, title: { display: true, text: 'Spread %', color: '#8b949e' } } } },
+  });
+  pnlChart = new Chart(document.getElementById('pnl-chart'), {
+    type: 'line',
+    data: { labels: [], datasets: [{ label: 'Total P&L ($)', data: [], borderColor: '#3fb950', backgroundColor: 'rgba(63,185,80,0.1)', fill: true, tension: 0.3, pointRadius: 2 }] },
+    options: { ...commonOpts,
+      scales: { ...commonOpts.scales, y: { ...commonOpts.scales.y, title: { display: true, text: 'P&L $', color: '#8b949e' } } } },
+  });
+}
+
+async function fetchHistory() {
+  try {
+    const r = await fetch(API_HISTORY);
+    const d = await r.json();
+
+    // Spread chart: top 5 coins by latest spread
+    if (d.spread_history && d.spread_history.length > 0) {
+      const latest = d.spread_history[d.spread_history.length-1].spreads;
+      const top5 = Object.entries(latest).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]);
+      const labels = d.spread_history.map(e=>e.ts.split(' ')[1]||e.ts);
+      const datasets = top5.map((coin,i)=>({
+        label: coin,
+        data: d.spread_history.map(e=>e.spreads[coin]||0),
+        borderColor: COLORS[i%COLORS.length],
+        backgroundColor: 'transparent',
+        tension: 0.3, pointRadius: 1, borderWidth: 2,
+      }));
+      spreadChart.data.labels = labels;
+      spreadChart.data.datasets = datasets;
+      spreadChart.update('none');
+    }
+
+    // P&L chart
+    if (d.pnl_history && d.pnl_history.length > 0) {
+      pnlChart.data.labels = d.pnl_history.map(e=>e.ts.split(' ')[1]||e.ts);
+      pnlChart.data.datasets[0].data = d.pnl_history.map(e=>e.total_pnl);
+      pnlChart.update('none');
+    }
+  } catch(e) {}
+}
+
+async function fetchState() {
+  try {
+    const r = await fetch(API_STATE);
+    const d = await r.json();
+
+    // Status
+    const dot=document.getElementById('status-dot'), st=document.getElementById('status-text');
+    if (d.mode==='shadow') { dot.className='status-dot dot-shadow'; st.textContent='SHADOW MODE'; }
+    else { dot.className='status-dot dot-live'; st.textContent='LIVE'; }
+
+    document.getElementById('h-cycle').textContent = d.cycle||'-';
+    document.getElementById('h-uptime').textContent = (d.uptime_hours||0).toFixed(1)+'h';
+    document.getElementById('h-coins').textContent = Object.keys(d.rates||{}).length;
+    document.getElementById('h-exchanges').textContent = (d.exchanges||[]).join(', ');
+    if (d.last_update) document.getElementById('last-update').textContent = new Date(d.last_update*1000).toLocaleTimeString();
+    if (d.next_poll_at) nextPollAt = d.next_poll_at;
+
+    // Summary cards
+    const pnl = d.total_pnl_usd||0;
+    const pnlEl = document.getElementById('total-pnl');
+    pnlEl.textContent = (pnl>=0?'+':'')+`$${Math.abs(pnl).toFixed(2)}`;
+    pnlEl.className = 'big '+(pnl>0.01?'pnl-pos':pnl<-0.01?'pnl-neg':'pnl-zero');
+    document.getElementById('pnl-sub').textContent = d.mode==='shadow'?'Shadow mode (estimated)':'Live P&L';
+
+    const exp = d.total_exposure_usd||0;
+    document.getElementById('total-exposure').textContent = fmtUsd(exp);
+    document.getElementById('exposure-sub').textContent = (d.positions||[]).length + ' legs across ' + (d.exchanges||[]).length + ' exchanges';
+
+    const sigs = d.signals||[];
+    const sigsOld = d.signals_old||[];
+    document.getElementById('signal-count-big').textContent = sigs.length;
+    document.getElementById('signal-count').textContent = sigs.length;
+    document.getElementById('signal-old-count').textContent = sigsOld.length;
+    const topSig = sigs[0] || sigsOld[0];
+    if (topSig) {
+      document.getElementById('signal-sub').textContent = sigs.filter(s=>s.confidence!=='LOW').length+' tradeable (new) / '+sigsOld.filter(s=>s.confidence!=='LOW').length+' (old)';
+      document.getElementById('top-spread').innerHTML = fmtSpread(topSig.spread);
+      document.getElementById('top-spread-sub').textContent = topSig.coin+' ('+topSig.long_exchange+'/'+topSig.short_exchange+')';
+    }
+
+    document.getElementById('signals-content').innerHTML = buildSignalsTable(sigs);
+    document.getElementById('signals-old-content').innerHTML = buildSignalsTable(sigsOld);
+    document.getElementById('position-count').textContent = (d.positions||[]).length;
+    document.getElementById('positions-content').innerHTML = buildPositionsTable(d.positions);
+
+    let totalRates=0;
+    for (const c of Object.keys(d.rates||{})) totalRates+=Object.keys(d.rates[c]).length;
+    document.getElementById('rates-count').textContent = totalRates+' rates';
+    document.getElementById('rates-table-wrap').innerHTML = buildRatesTable(d.rates,d.spreads,d.exchanges);
+  } catch(e) {
+    document.getElementById('status-dot').className='status-dot dot-offline';
+    document.getElementById('status-text').textContent='Connection error';
+  }
+}
+
+function updateCountdown() {
+  const rem=Math.max(0,nextPollAt-Date.now()/1000);
+  const m=Math.floor(rem/60), s=Math.floor(rem%60);
+  document.getElementById('countdown').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+
+initCharts();
+fetchState();
+fetchHistory();
+setInterval(fetchState, 5000);
+setInterval(fetchHistory, 30000);
+setInterval(updateCountdown, 1000);
+</script>
+</body>
+</html>

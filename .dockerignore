@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.git/
+.gitignore
+.claude/
+.env
+logs/
+reports/
+shadow_trades/
+backtest_results/
+*.png
+*.xlsx
+*.csv

@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Backtest Report — Funding Rate Arbitrage</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0d1117; color:#c9d1d9; font-family:'Segoe UI',sans-serif; padding:20px; }
+h1 { color:#58a6ff; margin-bottom:10px; }
+h2 { color:#58a6ff; margin:20px 0 10px; font-size:1.2em; }
+.stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:20px 0; }
+.stat { background:#161b22; border:1px solid #30363d; border-radius:8px; padding:16px; text-align:center; }
+.stat .value { font-size:2em; font-weight:bold; margin:4px 0; }
+.stat .label { color:#8b949e; font-size:0.85em; }
+.positive { color:#00d4aa; }
+.negative { color:#ff6b6b; }
+.chart-container { background:#161b22; border:1px solid #30363d; border-radius:8px; padding:16px; margin:12px 0; }
+canvas { max-height:350px; }
+table { width:100%; border-collapse:collapse; margin:12px 0; font-size:0.85em; }
+th { background:#21262d; color:#58a6ff; padding:8px; text-align:left; position:sticky; top:0; }
+td { padding:6px 8px; border-bottom:1px solid #21262d; }
+tr.open td { color:#00d4aa; }
+tr.close td { color:#ff6b6b; }
+.table-wrap { max-height:500px; overflow-y:auto; background:#161b22; border:1px solid #30363d; border-radius:8px; }
+.footer { color:#484f58; margin-top:30px; text-align:center; font-size:0.8em; }
+</style>
+</head>
+<body>
+<h1>Funding Rate Arbitrage — 12-Month Backtest</h1>
+<p style="color:#8b949e">Period: 2025-02-18 to 2026-02-18 | Generated: 2026-02-19 09:50</p>
+
+<div class="stats">
+  <div class="stat">
+    <div class="label">Final Equity</div>
+    <div class="value positive">$105,439</div>
+    <div class="label">from $100,000</div>
+  </div>
+  <div class="stat">
+    <div class="label">Total Return</div>
+    <div class="value positive">+5.4%</div>
+  </div>
+  <div class="stat">
+    <div class="label">Max Drawdown</div>
+    <div class="value negative">-1.3%</div>
+  </div>
+  <div class="stat">
+    <div class="label">Sharpe Ratio</div>
+    <div class="value positive">10.82</div>
+  </div>
+  <div class="stat">
+    <div class="label">Total Trades</div>
+    <div class="value">159</div>
+  </div>
+  <div class="stat">
+    <div class="label">Win Rate</div>
+    <div class="value">58%</div>
+  </div>
+  <div class="stat">
+    <div class="label">Avg Hold Time</div>
+    <div class="value">243h</div>
+  </div>
+  <div class="stat">
+    <div class="label">Total Fees</div>
+    <div class="value negative">$3,562</div>
+  </div>
+  <div class="stat">
+    <div class="label">Funding P&L</div>
+    <div class="value positive">$8,994</div>
+  </div>
+</div>
+
+<h2>Equity Curve</h2>
+<div class="chart-container"><canvas id="equityChart"></canvas></div>
+
+<h2>Drawdown</h2>
+<div class="chart-container"><canvas id="ddChart"></canvas></div>
+
+<h2>Per-Coin P&L</h2>
+<div class="chart-container"><canvas id="coinChart"></canvas></div>
+
+<h2>Monthly Returns</h2>
+<div class="chart-container"><canvas id="monthChart"></canvas></div>
+
+<h2>Trade Log (last 100)</h2>
+<div class="table-wrap">
+<table>
+<thead><tr>
+  <th>Date</th><th>Coin</th><th>Action</th><th>Long Ex</th><th>Short Ex</th>
+  <th>Size</th><th>Spread</th><th>Fees</th><th>Reason</th>
+</tr></thead>
+<tbody><tr class="close">
+            <td>2025-10-21 16:00</td>
+            <td>ETH</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,943</td>
+            <td>11.4%</td>
+            <td>$8.91</td>
+            <td>funding_flipped</td>
+        </tr><tr class="open">
+            <td>2025-10-21 16:00</td>
+            <td>ETH</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,929</td>
+            <td>11.4%</td>
+            <td>$8.89</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-10-28 00:00</td>
+            <td>ETH</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,929</td>
+            <td>0.9%</td>
+            <td>$8.89</td>
+            <td>spread_collapse (avg=1.2% vs entry 11.4%)</td>
+        </tr><tr class="close">
+            <td>2025-10-28 08:00</td>
+            <td>XRP</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,951</td>
+            <td>3.6%</td>
+            <td>$8.93</td>
+            <td>soft_max_age (344h, pnl=$63.0)</td>
+        </tr><tr class="close">
+            <td>2025-10-29 00:00</td>
+            <td>BTC</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,951</td>
+            <td>4.8%</td>
+            <td>$8.93</td>
+            <td>soft_max_age (344h, pnl=$65.1)</td>
+        </tr><tr class="open">
+            <td>2025-10-29 00:00</td>
+            <td>SOL</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$10,580</td>
+            <td>18.7%</td>
+            <td>$15.87</td>
+            <td></td>
+        </tr><tr class="open">
+            <td>2025-10-29 00:00</td>
+            <td>ETH</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,924</td>
+            <td>16.0%</td>
+            <td>$8.89</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-10-29 17:00</td>
+            <td>LINK</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,959</td>
+            <td>11.4%</td>
+            <td>$8.94</td>
+            <td>hard_max_age (505h)</td>
+        </tr><tr class="open">
+            <td>2025-10-30 00:00</td>
+            <td>LINK</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,461</td>
+            <td>11.4%</td>
+            <td>$12.69</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-11-01 00:00</td>
+            <td>SOL</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$10,580</td>
+            <td>1.9%</td>
+            <td>$15.87</td>
+            <td>spread_collapse (avg=2.7% vs entry 18.7%)</td>
+        </tr><tr class="open">
+            <td>2025-11-01 00:00</td>
+            <td>XRP</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$10,555</td>
+            <td>29.3%</td>
+            <td>$15.83</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-11-03 08:00</td>
+            <td>ETH</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,924</td>
+            <td>4.5%</td>
+            <td>$8.89</td>
+            <td>funding_flipped</td>
+        </tr><tr class="open">
+            <td>2025-11-04 00:00</td>
+            <td>ETH</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,915</td>
+            <td>16.2%</td>
+            <td>$8.87</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-11-08 00:00</td>
+            <td>XRP</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$10,555</td>
+            <td>6.5%</td>
+            <td>$15.83</td>
+            <td>spread_collapse (avg=4.1% vs entry 29.3%)</td>
+        </tr><tr class="open">
+            <td>2025-11-08 00:00</td>
+            <td>AVAX</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,469</td>
+            <td>11.4%</td>
+            <td>$12.70</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-11-10 09:00</td>
+            <td>BNB</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,471</td>
+            <td>11.5%</td>
+            <td>$12.71</td>
+            <td>hard_max_age (505h)</td>
+        </tr><tr class="open">
+            <td>2025-11-10 16:00</td>
+            <td>SOL</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,931</td>
+            <td>10.7%</td>
+            <td>$8.90</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-11-11 08:00</td>
+            <td>ETH</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,915</td>
+            <td>16.3%</td>
+            <td>$8.87</td>
+            <td>funding_flipped</td>
+        </tr><tr class="open">
+            <td>2025-11-11 08:00</td>
+            <td>BNB</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,473</td>
+            <td>17.1%</td>
+            <td>$12.71</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-11-14 00:00</td>
+            <td>LINK</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,461</td>
+            <td>3.5%</td>
+            <td>$12.69</td>
+            <td>soft_max_age (360h, pnl=$90.1)</td>
+        </tr><tr class="open">
+            <td>2025-11-14 00:00</td>
+            <td>XRP</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,898</td>
+            <td>58.8%</td>
+            <td>$13.35</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-11-15 00:00</td>
+            <td>SOL</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,931</td>
+            <td>11.0%</td>
+            <td>$8.90</td>
+            <td>funding_flipped</td>
+        </tr><tr class="open">
+            <td>2025-11-15 00:00</td>
+            <td>BTC</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,932</td>
+            <td>12.5%</td>
+            <td>$8.90</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-11-16 00:00</td>
+            <td>XRP</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,898</td>
+            <td>7.3%</td>
+            <td>$13.35</td>
+            <td>spread_collapse (avg=7.3% vs entry 58.8%)</td>
+        </tr><tr class="open">
+            <td>2025-11-16 00:00</td>
+            <td>LINK</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,475</td>
+            <td>11.4%</td>
+            <td>$12.71</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-11-20 00:00</td>
+            <td>BTC</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,932</td>
+            <td>6.2%</td>
+            <td>$8.90</td>
+            <td>funding_flipped</td>
+        </tr><tr class="open">
+            <td>2025-11-20 00:00</td>
+            <td>SUI</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,483</td>
+            <td>11.4%</td>
+            <td>$12.72</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-11-22 16:00</td>
+            <td>AVAX</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,469</td>
+            <td>6.8%</td>
+            <td>$12.70</td>
+            <td>soft_max_age (352h, pnl=$40.7)</td>
+        </tr><tr class="open">
+            <td>2025-11-22 16:00</td>
+            <td>ETH</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$8,486</td>
+            <td>21.2%</td>
+            <td>$12.73</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-11-24 00:00</td>
+            <td>ETH</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$8,486</td>
+            <td>0.2%</td>
+            <td>$12.73</td>
+            <td>spread_gone (avg=0.9%)</td>
+        </tr><tr class="open">
+            <td>2025-11-24 00:00</td>
+            <td>XRP</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,940</td>
+            <td>10.6%</td>
+            <td>$8.91</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-12-01 08:00</td>
+            <td>LINK</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,475</td>
+            <td>0.9%</td>
+            <td>$12.71</td>
+            <td>spread_collapse (avg=1.5% vs entry 11.4%)</td>
+        </tr><tr class="open">
+            <td>2025-12-01 08:00</td>
+            <td>BTC</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,947</td>
+            <td>18.3%</td>
+            <td>$8.92</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-12-02 09:00</td>
+            <td>BNB</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,473</td>
+            <td>11.4%</td>
+            <td>$12.71</td>
+            <td>hard_max_age (505h)</td>
+        </tr><tr class="open">
+            <td>2025-12-02 16:00</td>
+            <td>LINK</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,493</td>
+            <td>10.5%</td>
+            <td>$12.74</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-12-04 08:00</td>
+            <td>BTC</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,947</td>
+            <td>9.2%</td>
+            <td>$8.92</td>
+            <td>funding_flipped</td>
+        </tr><tr class="open">
+            <td>2025-12-04 08:00</td>
+            <td>SOL</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$10,613</td>
+            <td>28.8%</td>
+            <td>$15.92</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-12-09 16:00</td>
+            <td>SOL</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$10,613</td>
+            <td>0.1%</td>
+            <td>$15.92</td>
+            <td>spread_collapse (avg=2.2% vs entry 28.8%)</td>
+        </tr><tr class="open">
+            <td>2025-12-09 16:00</td>
+            <td>BNB</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$10,536</td>
+            <td>26.7%</td>
+            <td>$15.80</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-12-11 01:00</td>
+            <td>SUI</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,483</td>
+            <td>11.4%</td>
+            <td>$12.72</td>
+            <td>hard_max_age (505h)</td>
+        </tr><tr class="open">
+            <td>2025-12-11 08:00</td>
+            <td>AVAX</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,900</td>
+            <td>10.5%</td>
+            <td>$8.85</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-12-12 08:00</td>
+            <td>BNB</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$10,536</td>
+            <td>1.0%</td>
+            <td>$15.80</td>
+            <td>spread_gone (avg=0.7%)</td>
+        </tr><tr class="open">
+            <td>2025-12-12 08:00</td>
+            <td>BTC</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$8,430</td>
+            <td>20.1%</td>
+            <td>$12.65</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-12-15 00:00</td>
+            <td>XRP</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,940</td>
+            <td>4.4%</td>
+            <td>$8.91</td>
+            <td>soft_max_age (504h, pnl=$119.3)</td>
+        </tr><tr class="close">
+            <td>2025-12-15 00:00</td>
+            <td>BTC</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$8,430</td>
+            <td>2.3%</td>
+            <td>$12.65</td>
+            <td>spread_collapse (avg=1.5% vs entry 20.1%)</td>
+        </tr><tr class="open">
+            <td>2025-12-15 00:00</td>
+            <td>SOL</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,900</td>
+            <td>20.7%</td>
+            <td>$8.85</td>
+            <td></td>
+        </tr><tr class="open">
+            <td>2025-12-15 00:00</td>
+            <td>ETH</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,899</td>
+            <td>12.4%</td>
+            <td>$8.85</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-12-15 16:00</td>
+            <td>ETH</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,899</td>
+            <td>0.2%</td>
+            <td>$8.85</td>
+            <td>spread_gone (avg=0.7%)</td>
+        </tr><tr class="open">
+            <td>2025-12-15 16:00</td>
+            <td>BNB</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,899</td>
+            <td>11.4%</td>
+            <td>$8.85</td>
+            <td></td>
+        </tr><tr class="open">
+            <td>2025-12-16 00:00</td>
+            <td>XRP</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,899</td>
+            <td>13.2%</td>
+            <td>$8.85</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-12-17 00:00</td>
+            <td>LINK</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,493</td>
+            <td>0.1%</td>
+            <td>$12.74</td>
+            <td>soft_max_age (344h, pnl=$46.3)</td>
+        </tr><tr class="close">
+            <td>2025-12-17 00:00</td>
+            <td>SOL</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,900</td>
+            <td>1.9%</td>
+            <td>$8.85</td>
+            <td>spread_collapse (avg=1.9% vs entry 20.7%)</td>
+        </tr><tr class="open">
+            <td>2025-12-17 00:00</td>
+            <td>ETH</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$8,426</td>
+            <td>19.2%</td>
+            <td>$12.64</td>
+            <td></td>
+        </tr><tr class="open">
+            <td>2025-12-18 08:00</td>
+            <td>SOL</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,898</td>
+            <td>12.5%</td>
+            <td>$8.85</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-12-20 00:00</td>
+            <td>ETH</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$8,426</td>
+            <td>0.3%</td>
+            <td>$12.64</td>
+            <td>spread_collapse (avg=1.4% vs entry 19.2%)</td>
+        </tr><tr class="open">
+            <td>2025-12-20 00:00</td>
+            <td>SUI</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,425</td>
+            <td>11.4%</td>
+            <td>$12.64</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-12-21 16:00</td>
+            <td>SOL</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,898</td>
+            <td>1.8%</td>
+            <td>$8.85</td>
+            <td>spread_gone (avg=0.9%)</td>
+        </tr><tr class="open">
+            <td>2025-12-22 00:00</td>
+            <td>LINK</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,897</td>
+            <td>10.2%</td>
+            <td>$8.85</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2025-12-25 16:00</td>
+            <td>AVAX</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,900</td>
+            <td>10.5%</td>
+            <td>$8.85</td>
+            <td>soft_max_age (344h, pnl=$-42.5)</td>
+        </tr><tr class="open">
+            <td>2025-12-25 16:00</td>
+            <td>AVAX</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,899</td>
+            <td>10.5%</td>
+            <td>$8.85</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-01-01 00:00</td>
+            <td>XRP</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,899</td>
+            <td>1.8%</td>
+            <td>$8.85</td>
+            <td>soft_max_age (384h, pnl=$60.9)</td>
+        </tr><tr class="open">
+            <td>2026-01-01 08:00</td>
+            <td>ETH</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,906</td>
+            <td>18.6%</td>
+            <td>$8.86</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-01-05 08:00</td>
+            <td>LINK</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,897</td>
+            <td>8.8%</td>
+            <td>$8.85</td>
+            <td>soft_max_age (344h, pnl=$-39.5)</td>
+        </tr><tr class="open">
+            <td>2026-01-05 16:00</td>
+            <td>BTC</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,911</td>
+            <td>20.0%</td>
+            <td>$8.87</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-01-05 17:00</td>
+            <td>BNB</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,899</td>
+            <td>11.4%</td>
+            <td>$8.85</td>
+            <td>hard_max_age (505h)</td>
+        </tr><tr class="close">
+            <td>2026-01-06 00:00</td>
+            <td>ETH</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,906</td>
+            <td>12.2%</td>
+            <td>$8.86</td>
+            <td>funding_flipped</td>
+        </tr><tr class="open">
+            <td>2026-01-06 00:00</td>
+            <td>SOL</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$10,555</td>
+            <td>27.6%</td>
+            <td>$15.83</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-01-07 16:00</td>
+            <td>AVAX</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,899</td>
+            <td>2.6%</td>
+            <td>$8.85</td>
+            <td>spread_collapse (avg=1.2% vs entry 10.5%)</td>
+        </tr><tr class="open">
+            <td>2026-01-07 16:00</td>
+            <td>XRP</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,447</td>
+            <td>11.4%</td>
+            <td>$12.67</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-01-09 00:00</td>
+            <td>BTC</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,911</td>
+            <td>53.9%</td>
+            <td>$8.87</td>
+            <td>funding_flipped</td>
+        </tr><tr class="open">
+            <td>2026-01-09 16:00</td>
+            <td>BTC</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,907</td>
+            <td>16.0%</td>
+            <td>$8.86</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-01-10 01:00</td>
+            <td>SUI</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,425</td>
+            <td>8.8%</td>
+            <td>$12.64</td>
+            <td>hard_max_age (505h)</td>
+        </tr><tr class="close">
+            <td>2026-01-10 08:00</td>
+            <td>SOL</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$10,555</td>
+            <td>1.4%</td>
+            <td>$15.83</td>
+            <td>spread_collapse (avg=2.7% vs entry 27.6%)</td>
+        </tr><tr class="open">
+            <td>2026-01-10 16:00</td>
+            <td>AVAX</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,437</td>
+            <td>11.4%</td>
+            <td>$12.66</td>
+            <td></td>
+        </tr><tr class="open">
+            <td>2026-01-10 16:00</td>
+            <td>SUI</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,436</td>
+            <td>10.5%</td>
+            <td>$12.65</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-01-13 00:00</td>
+            <td>BTC</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,907</td>
+            <td>117.4%</td>
+            <td>$8.86</td>
+            <td>funding_flipped</td>
+        </tr><tr class="open">
+            <td>2026-01-13 00:00</td>
+            <td>ETH</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$8,440</td>
+            <td>15.3%</td>
+            <td>$12.66</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-01-16 16:00</td>
+            <td>ETH</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$8,440</td>
+            <td>3.5%</td>
+            <td>$12.66</td>
+            <td>funding_flipped</td>
+        </tr><tr class="open">
+            <td>2026-01-16 16:00</td>
+            <td>SOL</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,913</td>
+            <td>21.9%</td>
+            <td>$8.87</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-01-20 16:00</td>
+            <td>SOL</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,913</td>
+            <td>11.8%</td>
+            <td>$8.87</td>
+            <td>funding_flipped</td>
+        </tr><tr class="open">
+            <td>2026-01-20 16:00</td>
+            <td>SOL</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,907</td>
+            <td>11.8%</td>
+            <td>$8.86</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-01-25 16:00</td>
+            <td>SOL</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,907</td>
+            <td>27.2%</td>
+            <td>$8.86</td>
+            <td>funding_flipped</td>
+        </tr><tr class="open">
+            <td>2026-01-25 16:00</td>
+            <td>SOL</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,889</td>
+            <td>27.2%</td>
+            <td>$8.83</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-01-26 00:00</td>
+            <td>XRP</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,447</td>
+            <td>3.5%</td>
+            <td>$12.67</td>
+            <td>soft_max_age (440h, pnl=$56.6)</td>
+        </tr><tr class="close">
+            <td>2026-01-26 00:00</td>
+            <td>AVAX</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,437</td>
+            <td>7.0%</td>
+            <td>$12.66</td>
+            <td>soft_max_age (368h, pnl=$68.6)</td>
+        </tr><tr class="open">
+            <td>2026-01-26 00:00</td>
+            <td>ETH</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$10,511</td>
+            <td>14.0%</td>
+            <td>$15.77</td>
+            <td></td>
+        </tr><tr class="open">
+            <td>2026-01-26 00:00</td>
+            <td>BNB</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,407</td>
+            <td>11.4%</td>
+            <td>$12.61</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-01-28 00:00</td>
+            <td>SOL</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,889</td>
+            <td>2.5%</td>
+            <td>$8.83</td>
+            <td>spread_collapse (avg=1.4% vs entry 27.2%)</td>
+        </tr><tr class="open">
+            <td>2026-01-28 00:00</td>
+            <td>XRP</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,887</td>
+            <td>11.4%</td>
+            <td>$8.83</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-01-30 16:00</td>
+            <td>ETH</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$10,511</td>
+            <td>4.2%</td>
+            <td>$15.77</td>
+            <td>spread_collapse (avg=1.9% vs entry 14.0%)</td>
+        </tr><tr class="open">
+            <td>2026-01-30 16:00</td>
+            <td>LINK</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,412</td>
+            <td>10.5%</td>
+            <td>$12.62</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-01-31 17:00</td>
+            <td>SUI</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,436</td>
+            <td>10.5%</td>
+            <td>$12.65</td>
+            <td>hard_max_age (505h)</td>
+        </tr><tr class="open">
+            <td>2026-02-01 00:00</td>
+            <td>PLATINUM</td>
+            <td>OPEN</td>
+            <td>hyperliquid</td>
+            <td>aevo</td>
+            <td>$10,514</td>
+            <td>21.3%</td>
+            <td>$15.77</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-02-12 00:00</td>
+            <td>PLATINUM</td>
+            <td>CLOSE</td>
+            <td>hyperliquid</td>
+            <td>aevo</td>
+            <td>$10,514</td>
+            <td>2.0%</td>
+            <td>$15.77</td>
+            <td>spread_collapse (avg=1.9% vs entry 21.3%)</td>
+        </tr><tr class="open">
+            <td>2026-02-12 00:00</td>
+            <td>BTC</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,912</td>
+            <td>16.0%</td>
+            <td>$8.87</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-02-16 01:00</td>
+            <td>BNB</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,407</td>
+            <td>11.4%</td>
+            <td>$12.61</td>
+            <td>hard_max_age (505h)</td>
+        </tr><tr class="open">
+            <td>2026-02-16 08:00</td>
+            <td>ETH</td>
+            <td>OPEN</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$10,557</td>
+            <td>29.1%</td>
+            <td>$15.84</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-02-17 08:00</td>
+            <td>BTC</td>
+            <td>CLOSE</td>
+            <td>aevo</td>
+            <td>dydx</td>
+            <td>$5,912</td>
+            <td>1.4%</td>
+            <td>$8.87</td>
+            <td>spread_collapse (avg=2.0% vs entry 16.0%)</td>
+        </tr><tr class="open">
+            <td>2026-02-17 08:00</td>
+            <td>BNB</td>
+            <td>OPEN</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$8,439</td>
+            <td>11.3%</td>
+            <td>$12.66</td>
+            <td></td>
+        </tr><tr class="close">
+            <td>2026-02-18 01:00</td>
+            <td>XRP</td>
+            <td>CLOSE</td>
+            <td>dydx</td>
+            <td>aevo</td>
+            <td>$5,887</td>
+            <td>15.0%</td>
+            <td>$8.83</td>
+            <td>hard_max_age (505h)</td>
+        </tr></tbody>
+</table>
+</div>
+
+<div class="footer">Backtest by Funding Rate Arbitrage Bot</div>
+
+<script>
+const chartOpts = {
+  responsive: true,
+  plugins: { legend: { labels: { color: '#8b949e' } } },
+  scales: {
+    x: { ticks: { color: '#484f58', maxTicksLimit: 12 }, grid: { color: '#21262d' } },
+    y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } }
+  }
+};
+
+// Equity
+new Chart(document.getElementById('equityChart'), {
+  type: 'line',
+  data: {
+    labels: ["2025-02-18", "2025-02-19", "2025-02-19", "2025-02-19", "2025-02-19", "2025-02-19", "2025-02-19", "2025-02-20", "2025-02-20", "2025-02-20", "2025-02-20", "2025-02-20", "2025-02-20", "2025-02-21", "2025-02-21", "2025-02-21", "2025-02-21", "2025-02-21", "2025-02-21", "2025-02-22", "2025-02-22", "2025-02-22", "2025-02-22", "2025-02-22", "2025-02-22", "2025-02-23", "2025-02-23", "2025-02-23", "2025-02-23", "2025-02-23", "2025-02-23", "2025-02-24", "2025-02-24", "2025-02-24", "2025-02-24", "2025-02-24", "2025-02-24", "2025-02-25", "2025-02-25", "2025-02-25", "2025-02-25", "2025-02-25", "2025-02-25", "2025-02-26", "2025-02-26", "2025-02-26", "2025-02-26", "2025-02-26", "2025-02-26", "2025-02-27", "2025-02-27", "2025-02-27", "2025-02-27", "2025-02-27", "2025-02-27", "2025-02-28", "2025-02-28", "2025-02-28", "2025-02-28", "2025-02-28", "2025-02-28", "2025-03-01", "2025-03-01", "2025-03-01", "2025-03-01", "2025-03-01", "2025-03-01", "2025-03-02", "2025-03-02", "2025-03-02", "2025-03-02", "2025-03-02", "2025-03-02", "2025-03-03", "2025-03-03", "2025-03-03", "2025-03-03", "2025-03-03", "2025-03-03", "2025-03-04", "2025-03-04", "2025-03-04", "2025-03-04", "2025-03-04", "2025-03-04", "2025-03-05", "2025-03-05", "2025-03-05", "2025-03-05", "2025-03-05", "2025-03-05", "2025-03-06", "2025-03-06", "2025-03-06", "2025-03-06", "2025-03-06", "2025-03-06", "2025-03-07", "2025-03-07", "2025-03-07", "2025-03-07", "2025-03-07", "2025-03-07", "2025-03-08", "2025-03-08", "2025-03-08", "2025-03-08", "2025-03-08", "2025-03-08", "2025-03-09", "2025-03-09", "2025-03-09", "2025-03-09", "2025-03-09", "2025-03-09", "2025-03-10", "2025-03-10", "2025-03-10", "2025-03-10", "2025-03-10", "2025-03-10", "2025-03-11", "2025-03-11", "2025-03-11", "2025-03-11", "2025-03-11", "2025-03-11", "2025-03-12", "2025-03-12", "2025-03-12", "2025-03-12", "2025-03-12", "2025-03-12", "2025-03-13", "2025-03-13", "2025-03-13", "2025-03-13", "2025-03-13", "2025-03-13", "2025-03-14", "2025-03-14", "2025-03-14", "2025-03-14", "2025-03-14", "2025-03-14", "2025-03-15", "2025-03-15", "2025-03-15", "2025-03-15", "2025-03-15", "2025-03-15", "2025-03-16", "2025-03-16", "2025-03-16", "2025-03-16", "2025-03-16", "2025-03-16", "2025-03-17", "2025-03-17", "2025-03-17", "2025-03-17", "2025-03-17", "2025-03-17", "2025-03-18", "2025-03-18", "2025-03-18", "2025-03-18", "2025-03-18", "2025-03-18", "2025-03-19", "2025-03-19", "2025-03-19", "2025-03-19", "2025-03-19", "2025-03-19", "2025-03-20", "2025-03-20", "2025-03-20", "2025-03-20", "2025-03-20", "2025-03-20", "2025-03-21", "2025-03-21", "2025-03-21", "2025-03-21", "2025-03-21", "2025-03-21", "2025-03-22", "2025-03-22", "2025-03-22", "2025-03-22", "2025-03-22", "2025-03-22", "2025-03-23", "2025-03-23", "2025-03-23", "2025-03-23", "2025-03-23", "2025-03-23", "2025-03-24", "2025-03-24", "2025-03-24", "2025-03-24", "2025-03-24", "2025-03-24", "2025-03-25", "2025-03-25", "2025-03-25", "2025-03-25", "2025-03-25", "2025-03-25", "2025-03-26", "2025-03-26", "2025-03-26", "2025-03-26", "2025-03-26", "2025-03-26", "2025-03-27", "2025-03-27", "2025-03-27", "2025-03-27", "2025-03-27", "2025-03-27", "2025-03-28", "2025-03-28", "2025-03-28", "2025-03-28", "2025-03-28", "2025-03-28", "2025-03-29", "2025-03-29", "2025-03-29", "2025-03-29", "2025-03-29", "2025-03-29", "2025-03-30", "2025-03-30", "2025-03-30", "2025-03-30", "2025-03-30", "2025-03-30", "2025-03-31", "2025-03-31", "2025-03-31", "2025-03-31", "2025-03-31", "2025-03-31", "2025-04-01", "2025-04-01", "2025-04-01", "2025-04-01", "2025-04-01", "2025-04-01", "2025-04-02", "2025-04-02", "2025-04-02", "2025-04-02", "2025-04-02", "2025-04-02", "2025-04-03", "2025-04-03", "2025-04-03", "2025-04-03", "2025-04-03", "2025-04-03", "2025-04-04", "2025-04-04", "2025-04-04", "2025-04-04", "2025-04-04", "2025-04-04", "2025-04-05", "2025-04-05", "2025-04-05", "2025-04-05", "2025-04-05", "2025-04-05", "2025-04-06", "2025-04-06", "2025-04-06", "2025-04-06", "2025-04-06", "2025-04-06", "2025-04-07", "2025-04-07", "2025-04-07", "2025-04-07", "2025-04-07", "2025-04-07", "2025-04-08", "2025-04-08", "2025-04-08", "2025-04-08", "2025-04-08", "2025-04-08", "2025-04-09", "2025-04-09", "2025-04-09", "2025-04-09", "2025-04-09", "2025-04-09", "2025-04-10", "2025-04-10", "2025-04-10", "2025-04-10", "2025-04-10", "2025-04-10", "2025-04-11", "2025-04-11", "2025-04-11", "2025-04-11", "2025-04-11", "2025-04-11", "2025-04-12", "2025-04-12", "2025-04-12", "2025-04-12", "2025-04-12", "2025-04-12", "2025-04-13", "2025-04-13", "2025-04-13", "2025-04-13", "2025-04-13", "2025-04-13", "2025-04-14", "2025-04-14", "2025-04-14", "2025-04-14", "2025-04-14", "2025-04-14", "2025-04-15", "2025-04-15", "2025-04-15", "2025-04-15", "2025-04-15", "2025-04-15", "2025-04-16", "2025-04-16", "2025-04-16", "2025-04-16", "2025-04-16", "2025-04-16", "2025-04-17", "2025-04-17", "2025-04-17", "2025-04-17", "2025-04-17", "2025-04-17", "2025-04-18", "2025-04-18", "2025-04-18", "2025-04-18", "2025-04-18", "2025-04-18", "2025-04-19", "2025-04-19", "2025-04-19", "2025-04-19", "2025-04-19", "2025-04-19", "2025-04-20", "2025-04-20", "2025-04-20", "2025-04-20", "2025-04-20", "2025-04-20", "2025-04-21", "2025-04-21", "2025-04-21", "2025-04-21", "2025-04-21", "2025-04-21", "2025-04-22", "2025-04-22", "2025-04-22", "2025-04-22", "2025-04-22", "2025-04-22", "2025-04-23", "2025-04-23", "2025-04-23", "2025-04-23", "2025-04-23", "2025-04-23", "2025-04-24", "2025-04-24", "2025-04-24", "2025-04-24", "2025-04-24", "2025-04-24", "2025-04-25", "2025-04-25", "2025-04-25", "2025-04-25", "2025-04-25", "2025-04-25", "2025-04-26", "2025-04-26", "2025-04-26", "2025-04-26", "2025-04-26", "2025-04-26", "2025-04-27", "2025-04-27", "2025-04-27", "2025-04-27", "2025-04-27", "2025-04-27", "2025-04-28", "2025-04-28", "2025-04-28", "2025-04-28", "2025-04-28", "2025-04-28", "2025-04-29", "2025-04-29", "2025-04-29", "2025-04-29", "2025-04-29", "2025-04-29", "2025-04-30", "2025-04-30", "2025-04-30", "2025-04-30", "2025-04-30", "2025-04-30", "2025-05-01", "2025-05-01", "2025-05-01", "2025-05-01", "2025-05-01", "2025-05-01", "2025-05-02", "2025-05-02", "2025-05-02", "2025-05-02", "2025-05-02", "2025-05-02", "2025-05-03", "2025-05-03", "2025-05-03", "2025-05-03", "2025-05-03", "2025-05-03", "2025-05-04", "2025-05-04", "2025-05-04", "2025-05-04", "2025-05-04", "2025-05-04", "2025-05-05", "2025-05-05", "2025-05-05", "2025-05-05", "2025-05-05", "2025-05-05", "2025-05-06", "2025-05-06", "2025-05-06", "2025-05-06", "2025-05-06", "2025-05-06", "2025-05-07", "2025-05-07", "2025-05-07", "2025-05-07", "2025-05-07", "2025-05-07", "2025-05-08", "2025-05-08", "2025-05-08", "2025-05-08", "2025-05-08", "2025-05-08", "2025-05-09", "2025-05-09", "2025-05-09", "2025-05-09", "2025-05-09", "2025-05-09", "2025-05-10", "2025-05-10", "2025-05-10", "2025-05-10", "2025-05-10", "2025-05-10", "2025-05-11", "2025-05-11", "2025-05-11", "2025-05-11", "2025-05-11", "2025-05-11", "2025-05-12", "2025-05-12", "2025-05-12", "2025-05-12", "2025-05-12", "2025-05-12", "2025-05-13", "2025-05-13", "2025-05-13", "2025-05-13", "2025-05-13", "2025-05-13", "2025-05-14", "2025-05-14", "2025-05-14", "2025-05-14", "2025-05-14", "2025-05-14", "2025-05-15", "2025-05-15", "2025-05-15", "2025-05-15", "2025-05-15", "2025-05-15", "2025-05-16", "2025-05-16", "2025-05-16", "2025-05-16", "2025-05-16", "2025-05-16", "2025-05-17", "2025-05-17", "2025-05-17", "2025-05-17", "2025-05-17", "2025-05-17", "2025-05-18", "2025-05-18", "2025-05-18", "2025-05-18", "2025-05-18", "2025-05-18", "2025-05-19", "2025-05-19", "2025-05-19", "2025-05-19", "2025-05-19", "2025-05-19", "2025-05-20", "2025-05-20", "2025-05-20", "2025-05-20", "2025-05-20", "2025-05-20", "2025-05-21", "2025-05-21", "2025-05-21", "2025-05-21", "2025-05-21", "2025-05-21", "2025-05-22", "2025-05-22", "2025-05-22", "2025-05-22", "2025-05-22", "2025-05-22", "2025-05-23", "2025-05-23", "2025-05-23", "2025-05-23", "2025-05-23", "2025-05-23", "2025-05-24", "2025-05-24", "2025-05-24", "2025-05-24", "2025-05-24", "2025-05-24", "2025-05-25", "2025-05-25", "2025-05-25", "2025-05-25", "2025-05-25", "2025-05-25", "2025-05-26", "2025-05-26", "2025-05-26", "2025-05-26", "2025-05-26", "2025-05-26", "2025-05-27", "2025-05-27", "2025-05-27", "2025-05-27", "2025-05-27", "2025-05-27", "2025-05-28", "2025-05-28", "2025-05-28", "2025-05-28", "2025-05-28", "2025-05-28", "2025-05-29", "2025-05-29", "2025-05-29", "2025-05-29", "2025-05-29", "2025-05-29", "2025-05-30", "2025-05-30", "2025-05-30", "2025-05-30", "2025-05-30", "2025-05-30", "2025-05-31", "2025-05-31", "2025-05-31", "2025-05-31", "2025-05-31", "2025-05-31", "2025-06-01", "2025-06-01", "2025-06-01", "2025-06-01", "2025-06-01", "2025-06-01", "2025-06-02", "2025-06-02", "2025-06-02", "2025-06-02", "2025-06-02", "2025-06-02", "2025-06-03", "2025-06-03", "2025-06-03", "2025-06-03", "2025-06-03", "2025-06-03", "2025-06-04", "2025-06-04", "2025-06-04", "2025-06-04", "2025-06-04", "2025-06-04", "2025-06-05", "2025-06-05", "2025-06-05", "2025-06-05", "2025-06-05", "2025-06-05", "2025-06-06", "2025-06-06", "2025-06-06", "2025-06-06", "2025-06-06", "2025-06-06", "2025-06-07", "2025-06-07", "2025-06-07", "2025-06-07", "2025-06-07", "2025-06-07", "2025-06-08", "2025-06-08", "2025-06-08", "2025-06-08", "2025-06-08", "2025-06-08", "2025-06-09", "2025-06-09", "2025-06-09", "2025-06-09", "2025-06-09", "2025-06-09", "2025-06-10", "2025-06-10", "2025-06-10", "2025-06-10", "2025-06-10", "2025-06-10", "2025-06-11", "2025-06-11", "2025-06-11", "2025-06-11", "2025-06-11", "2025-06-11", "2025-06-12", "2025-06-12", "2025-06-12", "2025-06-12", "2025-06-12", "2025-06-12", "2025-06-13", "2025-06-13", "2025-06-13", "2025-06-13", "2025-06-13", "2025-06-13", "2025-06-14", "2025-06-14", "2025-06-14", "2025-06-14", "2025-06-14", "2025-06-14", "2025-06-15", "2025-06-15", "2025-06-15", "2025-06-15", "2025-06-15", "2025-06-15", "2025-06-16", "2025-06-16", "2025-06-16", "2025-06-16", "2025-06-16", "2025-06-16", "2025-06-17", "2025-06-17", "2025-06-17", "2025-06-17", "2025-06-17", "2025-06-17", "2025-06-18", "2025-06-18", "2025-06-18", "2025-06-18", "2025-06-18", "2025-06-18", "2025-06-19", "2025-06-19", "2025-06-19", "2025-06-19", "2025-06-19", "2025-06-19", "2025-06-20", "2025-06-20", "2025-06-20", "2025-06-20", "2025-06-20", "2025-06-20", "2025-06-21", "2025-06-21", "2025-06-21", "2025-06-21", "2025-06-21", "2025-06-21", "2025-06-22", "2025-06-22", "2025-06-22", "2025-06-22", "2025-06-22", "2025-06-22", "2025-06-23", "2025-06-23", "2025-06-23", "2025-06-23", "2025-06-23", "2025-06-23", "2025-06-24", "2025-06-24", "2025-06-24", "2025-06-24", "2025-06-24", "2025-06-24", "2025-06-25", "2025-06-25", "2025-06-25", "2025-06-25", "2025-06-25", "2025-06-25", "2025-06-26", "2025-06-26", "2025-06-26", "2025-06-26", "2025-06-26", "2025-06-26", "2025-06-27", "2025-06-27", "2025-06-27", "2025-06-27", "2025-06-27", "2025-06-27", "2025-06-28", "2025-06-28", "2025-06-28", "2025-06-28", "2025-06-28", "2025-06-28", "2025-06-29", "2025-06-29", "2025-06-29", "2025-06-29", "2025-06-29", "2025-06-29", "2025-06-30", "2025-06-30", "2025-06-30", "2025-06-30", "2025-06-30", "2025-06-30", "2025-07-01", "2025-07-01", "2025-07-01", "2025-07-01", "2025-07-01", "2025-07-01", "2025-07-02", "2025-07-02", "2025-07-02", "2025-07-02", "2025-07-02", "2025-07-02", "2025-07-03", "2025-07-03", "2025-07-03", "2025-07-03", "2025-07-03", "2025-07-03", "2025-07-04", "2025-07-04", "2025-07-04", "2025-07-04", "2025-07-04", "2025-07-04", "2025-07-05", "2025-07-05", "2025-07-05", "2025-07-05", "2025-07-05", "2025-07-05", "2025-07-06", "2025-07-06", "2025-07-06", "2025-07-06", "2025-07-06", "2025-07-06", "2025-07-07", "2025-07-07", "2025-07-07", "2025-07-07", "2025-07-07", "2025-07-07", "2025-07-08", "2025-07-08", "2025-07-08", "2025-07-08", "2025-07-08", "2025-07-08", "2025-07-09", "2025-07-09", "2025-07-09", "2025-07-09", "2025-07-09", "2025-07-09", "2025-07-10", "2025-07-10", "2025-07-10", "2025-07-10", "2025-07-10", "2025-07-10", "2025-07-11", "2025-07-11", "2025-07-11", "2025-07-11", "2025-07-11", "2025-07-11", "2025-07-12", "2025-07-12", "2025-07-12", "2025-07-12", "2025-07-12", "2025-07-12", "2025-07-13", "2025-07-13", "2025-07-13", "2025-07-13", "2025-07-13", "2025-07-13", "2025-07-14", "2025-07-14", "2025-07-14", "2025-07-14", "2025-07-14", "2025-07-14", "2025-07-15", "2025-07-15", "2025-07-15", "2025-07-15", "2025-07-15", "2025-07-15", "2025-07-16", "2025-07-16", "2025-07-16", "2025-07-16", "2025-07-16", "2025-07-16", "2025-07-17", "2025-07-17", "2025-07-17", "2025-07-17", "2025-07-17", "2025-07-17", "2025-07-18", "2025-07-18", "2025-07-18", "2025-07-18", "2025-07-18", "2025-07-18", "2025-07-19", "2025-07-19", "2025-07-19", "2025-07-19", "2025-07-19", "2025-07-19", "2025-07-20", "2025-07-20", "2025-07-20", "2025-07-20", "2025-07-20", "2025-07-20", "2025-07-21", "2025-07-21", "2025-07-21", "2025-07-21", "2025-07-21", "2025-07-21", "2025-07-22", "2025-07-22", "2025-07-22", "2025-07-22", "2025-07-22", "2025-07-22", "2025-07-23", "2025-07-23", "2025-07-23", "2025-07-23", "2025-07-23", "2025-07-23", "2025-07-24", "2025-07-24", "2025-07-24", "2025-07-24", "2025-07-24", "2025-07-24", "2025-07-25", "2025-07-25", "2025-07-25", "2025-07-25", "2025-07-25", "2025-07-25", "2025-07-26", "2025-07-26", "2025-07-26", "2025-07-26", "2025-07-26", "2025-07-26", "2025-07-27", "2025-07-27", "2025-07-27", "2025-07-27", "2025-07-27", "2025-07-27", "2025-07-28", "2025-07-28", "2025-07-28", "2025-07-28", "2025-07-28", "2025-07-28", "2025-07-29", "2025-07-29", "2025-07-29", "2025-07-29", "2025-07-29", "2025-07-29", "2025-07-30", "2025-07-30", "2025-07-30", "2025-07-30", "2025-07-30", "2025-07-30", "2025-07-31", "2025-07-31", "2025-07-31", "2025-07-31", "2025-07-31", "2025-07-31", "2025-08-01", "2025-08-01", "2025-08-01", "2025-08-01", "2025-08-01", "2025-08-01", "2025-08-02", "2025-08-02", "2025-08-02", "2025-08-02", "2025-08-02", "2025-08-02", "2025-08-03", "2025-08-03", "2025-08-03", "2025-08-03", "2025-08-03", "2025-08-03", "2025-08-04", "2025-08-04", "2025-08-04", "2025-08-04", "2025-08-04", "2025-08-04", "2025-08-05", "2025-08-05", "2025-08-05", "2025-08-05", "2025-08-05", "2025-08-05", "2025-08-06", "2025-08-06", "2025-08-06", "2025-08-06", "2025-08-06", "2025-08-06", "2025-08-07", "2025-08-07", "2025-08-07", "2025-08-07", "2025-08-07", "2025-08-07", "2025-08-08", "2025-08-08", "2025-08-08", "2025-08-08", "2025-08-08", "2025-08-08", "2025-08-09", "2025-08-09", "2025-08-09", "2025-08-09", "2025-08-09", "2025-08-09", "2025-08-10", "2025-08-10", "2025-08-10", "2025-08-10", "2025-08-10", "2025-08-10", "2025-08-11", "2025-08-11", "2025-08-11", "2025-08-11", "2025-08-11", "2025-08-11", "2025-08-12", "2025-08-12", "2025-08-12", "2025-08-12", "2025-08-12", "2025-08-12", "2025-08-13", "2025-08-13", "2025-08-13", "2025-08-13", "2025-08-13", "2025-08-13", "2025-08-14", "2025-08-14", "2025-08-14", "2025-08-14", "2025-08-14", "2025-08-14", "2025-08-15", "2025-08-15", "2025-08-15", "2025-08-15", "2025-08-15", "2025-08-15", "2025-08-16", "2025-08-16", "2025-08-16", "2025-08-16", "2025-08-16", "2025-08-16", "2025-08-17", "2025-08-17", "2025-08-17", "2025-08-17", "2025-08-17", "2025-08-17", "2025-08-18", "2025-08-18", "2025-08-18", "2025-08-18", "2025-08-18", "2025-08-18", "2025-08-19", "2025-08-19", "2025-08-19", "2025-08-19", "2025-08-19", "2025-08-19", "2025-08-20", "2025-08-20", "2025-08-20", "2025-08-20", "2025-08-20", "2025-08-20", "2025-08-21", "2025-08-21", "2025-08-21", "2025-08-21", "2025-08-21", "2025-08-21", "2025-08-22", "2025-08-22", "2025-08-22", "2025-08-22", "2025-08-22", "2025-08-22", "2025-08-23", "2025-08-23", "2025-08-23", "2025-08-23", "2025-08-23", "2025-08-23", "2025-08-24", "2025-08-24", "2025-08-24", "2025-08-24", "2025-08-24", "2025-08-24", "2025-08-25", "2025-08-25", "2025-08-25", "2025-08-25", "2025-08-25", "2025-08-25", "2025-08-26", "2025-08-26", "2025-08-26", "2025-08-26", "2025-08-26", "2025-08-26", "2025-08-27", "2025-08-27", "2025-08-27", "2025-08-27", "2025-08-27", "2025-08-27", "2025-08-28", "2025-08-28", "2025-08-28", "2025-08-28", "2025-08-28", "2025-08-28", "2025-08-29", "2025-08-29", "2025-08-29", "2025-08-29", "2025-08-29", "2025-08-29", "2025-08-30", "2025-08-30", "2025-08-30", "2025-08-30", "2025-08-30", "2025-08-30", "2025-08-31", "2025-08-31", "2025-08-31", "2025-08-31", "2025-08-31", "2025-08-31", "2025-09-01", "2025-09-01", "2025-09-01", "2025-09-01", "2025-09-01", "2025-09-01", "2025-09-02", "2025-09-02", "2025-09-02", "2025-09-02", "2025-09-02", "2025-09-02", "2025-09-03", "2025-09-03", "2025-09-03", "2025-09-03", "2025-09-03", "2025-09-03", "2025-09-04", "2025-09-04", "2025-09-04", "2025-09-04", "2025-09-04", "2025-09-04", "2025-09-05", "2025-09-05", "2025-09-05", "2025-09-05", "2025-09-05", "2025-09-05", "2025-09-06", "2025-09-06", "2025-09-06", "2025-09-06", "2025-09-06", "2025-09-06", "2025-09-07", "2025-09-07", "2025-09-07", "2025-09-07", "2025-09-07", "2025-09-07", "2025-09-08", "2025-09-08", "2025-09-08", "2025-09-08", "2025-09-08", "2025-09-08", "2025-09-09", "2025-09-09", "2025-09-09", "2025-09-09", "2025-09-09", "2025-09-09", "2025-09-10", "2025-09-10", "2025-09-10", "2025-09-10", "2025-09-10", "2025-09-10", "2025-09-11", "2025-09-11", "2025-09-11", "2025-09-11", "2025-09-11", "2025-09-11", "2025-09-12", "2025-09-12", "2025-09-12", "2025-09-12", "2025-09-12", "2025-09-12", "2025-09-13", "2025-09-13", "2025-09-13", "2025-09-13", "2025-09-13", "2025-09-13", "2025-09-14", "2025-09-14", "2025-09-14", "2025-09-14", "2025-09-14", "2025-09-14", "2025-09-15", "2025-09-15", "2025-09-15", "2025-09-15", "2025-09-15", "2025-09-15", "2025-09-16", "2025-09-16", "2025-09-16", "2025-09-16", "2025-09-16", "2025-09-16", "2025-09-17", "2025-09-17", "2025-09-17", "2025-09-17", "2025-09-17", "2025-09-17", "2025-09-18", "2025-09-18", "2025-09-18", "2025-09-18", "2025-09-18", "2025-09-18", "2025-09-19", "2025-09-19", "2025-09-19", "2025-09-19", "2025-09-19", "2025-09-19", "2025-09-20", "2025-09-20", "2025-09-20", "2025-09-20", "2025-09-20", "2025-09-20", "2025-09-21", "2025-09-21", "2025-09-21", "2025-09-21", "2025-09-21", "2025-09-21", "2025-09-22", "2025-09-22", "2025-09-22", "2025-09-22", "2025-09-22", "2025-09-22", "2025-09-23", "2025-09-23", "2025-09-23", "2025-09-23", "2025-09-23", "2025-09-23", "2025-09-24", "2025-09-24", "2025-09-24", "2025-09-24", "2025-09-24", "2025-09-24", "2025-09-25", "2025-09-25", "2025-09-25", "2025-09-25", "2025-09-25", "2025-09-25", "2025-09-26", "2025-09-26", "2025-09-26", "2025-09-26", "2025-09-26", "2025-09-26", "2025-09-27", "2025-09-27", "2025-09-27", "2025-09-27", "2025-09-27", "2025-09-27", "2025-09-28", "2025-09-28", "2025-09-28", "2025-09-28", "2025-09-28", "2025-09-28", "2025-09-29", "2025-09-29", "2025-09-29", "2025-09-29", "2025-09-29", "2025-09-29", "2025-09-30", "2025-09-30", "2025-09-30", "2025-09-30", "2025-09-30", "2025-09-30", "2025-10-01", "2025-10-01", "2025-10-01", "2025-10-01", "2025-10-01", "2025-10-01", "2025-10-02", "2025-10-02", "2025-10-02", "2025-10-02", "2025-10-02", "2025-10-02", "2025-10-03", "2025-10-03", "2025-10-03", "2025-10-03", "2025-10-03", "2025-10-03", "2025-10-04", "2025-10-04", "2025-10-04", "2025-10-04", "2025-10-04", "2025-10-04", "2025-10-05", "2025-10-05", "2025-10-05", "2025-10-05", "2025-10-05", "2025-10-05", "2025-10-06", "2025-10-06", "2025-10-06", "2025-10-06", "2025-10-06", "2025-10-06", "2025-10-07", "2025-10-07", "2025-10-07", "2025-10-07", "2025-10-07", "2025-10-07", "2025-10-08", "2025-10-08", "2025-10-08", "2025-10-08", "2025-10-08", "2025-10-08", "2025-10-09", "2025-10-09", "2025-10-09", "2025-10-09", "2025-10-09", "2025-10-09", "2025-10-10", "2025-10-10", "2025-10-10", "2025-10-10", "2025-10-10", "2025-10-10", "2025-10-11", "2025-10-11", "2025-10-11", "2025-10-11", "2025-10-11", "2025-10-11", "2025-10-12", "2025-10-12", "2025-10-12", "2025-10-12", "2025-10-12", "2025-10-12", "2025-10-13", "2025-10-13", "2025-10-13", "2025-10-13", "2025-10-13", "2025-10-13", "2025-10-14", "2025-10-14", "2025-10-14", "2025-10-14", "2025-10-14", "2025-10-14", "2025-10-15", "2025-10-15", "2025-10-15", "2025-10-15", "2025-10-15", "2025-10-15", "2025-10-16", "2025-10-16", "2025-10-16", "2025-10-16", "2025-10-16", "2025-10-16", "2025-10-17", "2025-10-17", "2025-10-17", "2025-10-17", "2025-10-17", "2025-10-17", "2025-10-18", "2025-10-18", "2025-10-18", "2025-10-18", "2025-10-18", "2025-10-18", "2025-10-19", "2025-10-19", "2025-10-19", "2025-10-19", "2025-10-19", "2025-10-19", "2025-10-20", "2025-10-20", "2025-10-20", "2025-10-20", "2025-10-20", "2025-10-20", "2025-10-21", "2025-10-21", "2025-10-21", "2025-10-21", "2025-10-21", "2025-10-21", "2025-10-22", "2025-10-22", "2025-10-22", "2025-10-22", "2025-10-22", "2025-10-22", "2025-10-23", "2025-10-23", "2025-10-23", "2025-10-23", "2025-10-23", "2025-10-23", "2025-10-24", "2025-10-24", "2025-10-24", "2025-10-24", "2025-10-24", "2025-10-24", "2025-10-25", "2025-10-25", "2025-10-25", "2025-10-25", "2025-10-25", "2025-10-25", "2025-10-26", "2025-10-26", "2025-10-26", "2025-10-26", "2025-10-26", "2025-10-26", "2025-10-27", "2025-10-27", "2025-10-27", "2025-10-27", "2025-10-27", "2025-10-27", "2025-10-28", "2025-10-28", "2025-10-28", "2025-10-28", "2025-10-28", "2025-10-28", "2025-10-29", "2025-10-29", "2025-10-29", "2025-10-29", "2025-10-29", "2025-10-29", "2025-10-30", "2025-10-30", "2025-10-30", "2025-10-30", "2025-10-30", "2025-10-30", "2025-10-31", "2025-10-31", "2025-10-31", "2025-10-31", "2025-10-31", "2025-10-31", "2025-11-01", "2025-11-01", "2025-11-01", "2025-11-01", "2025-11-01", "2025-11-01", "2025-11-02", "2025-11-02", "2025-11-02", "2025-11-02", "2025-11-02", "2025-11-02", "2025-11-03", "2025-11-03", "2025-11-03", "2025-11-03", "2025-11-03", "2025-11-03", "2025-11-04", "2025-11-04", "2025-11-04", "2025-11-04", "2025-11-04", "2025-11-04", "2025-11-05", "2025-11-05", "2025-11-05", "2025-11-05", "2025-11-05", "2025-11-05", "2025-11-06", "2025-11-06", "2025-11-06", "2025-11-06", "2025-11-06", "2025-11-06", "2025-11-07", "2025-11-07", "2025-11-07", "2025-11-07", "2025-11-07", "2025-11-07", "2025-11-08", "2025-11-08", "2025-11-08", "2025-11-08", "2025-11-08", "2025-11-08", "2025-11-09", "2025-11-09", "2025-11-09", "2025-11-09", "2025-11-09", "2025-11-09", "2025-11-10", "2025-11-10", "2025-11-10", "2025-11-10", "2025-11-10", "2025-11-10", "2025-11-11", "2025-11-11", "2025-11-11", "2025-11-11", "2025-11-11", "2025-11-11", "2025-11-12", "2025-11-12", "2025-11-12", "2025-11-12", "2025-11-12", "2025-11-12", "2025-11-13", "2025-11-13", "2025-11-13", "2025-11-13", "2025-11-13", "2025-11-13", "2025-11-14", "2025-11-14", "2025-11-14", "2025-11-14", "2025-11-14", "2025-11-14", "2025-11-15", "2025-11-15", "2025-11-15", "2025-11-15", "2025-11-15", "2025-11-15", "2025-11-16", "2025-11-16", "2025-11-16", "2025-11-16", "2025-11-16", "2025-11-16", "2025-11-17", "2025-11-17", "2025-11-17", "2025-11-17", "2025-11-17", "2025-11-17", "2025-11-18", "2025-11-18", "2025-11-18", "2025-11-18", "2025-11-18", "2025-11-18", "2025-11-19", "2025-11-19", "2025-11-19", "2025-11-19", "2025-11-19", "2025-11-19", "2025-11-20", "2025-11-20", "2025-11-20", "2025-11-20", "2025-11-20", "2025-11-20", "2025-11-21", "2025-11-21", "2025-11-21", "2025-11-21", "2025-11-21", "2025-11-21", "2025-11-22", "2025-11-22", "2025-11-22", "2025-11-22", "2025-11-22", "2025-11-22", "2025-11-23", "2025-11-23", "2025-11-23", "2025-11-23", "2025-11-23", "2025-11-23", "2025-11-24", "2025-11-24", "2025-11-24", "2025-11-24", "2025-11-24", "2025-11-24", "2025-11-25", "2025-11-25", "2025-11-25", "2025-11-25", "2025-11-25", "2025-11-25", "2025-11-26", "2025-11-26", "2025-11-26", "2025-11-26", "2025-11-26", "2025-11-26", "2025-11-27", "2025-11-27", "2025-11-27", "2025-11-27", "2025-11-27", "2025-11-27", "2025-11-28", "2025-11-28", "2025-11-28", "2025-11-28", "2025-11-28", "2025-11-28", "2025-11-29", "2025-11-29", "2025-11-29", "2025-11-29", "2025-11-29", "2025-11-29", "2025-11-30", "2025-11-30", "2025-11-30", "2025-11-30", "2025-11-30", "2025-11-30", "2025-12-01", "2025-12-01", "2025-12-01", "2025-12-01", "2025-12-01", "2025-12-01", "2025-12-02", "2025-12-02", "2025-12-02", "2025-12-02", "2025-12-02", "2025-12-02", "2025-12-03", "2025-12-03", "2025-12-03", "2025-12-03", "2025-12-03", "2025-12-03", "2025-12-04", "2025-12-04", "2025-12-04", "2025-12-04", "2025-12-04", "2025-12-04", "2025-12-05", "2025-12-05", "2025-12-05", "2025-12-05", "2025-12-05", "2025-12-05", "2025-12-06", "2025-12-06", "2025-12-06", "2025-12-06", "2025-12-06", "2025-12-06", "2025-12-07", "2025-12-07", "2025-12-07", "2025-12-07", "2025-12-07", "2025-12-07", "2025-12-08", "2025-12-08", "2025-12-08", "2025-12-08", "2025-12-08", "2025-12-08", "2025-12-09", "2025-12-09", "2025-12-09", "2025-12-09", "2025-12-09", "2025-12-09", "2025-12-10", "2025-12-10", "2025-12-10", "2025-12-10", "2025-12-10", "2025-12-10", "2025-12-11", "2025-12-11", "2025-12-11", "2025-12-11", "2025-12-11", "2025-12-11", "2025-12-12", "2025-12-12", "2025-12-12", "2025-12-12", "2025-12-12", "2025-12-12", "2025-12-13", "2025-12-13", "2025-12-13", "2025-12-13", "2025-12-13", "2025-12-13", "2025-12-14", "2025-12-14", "2025-12-14", "2025-12-14", "2025-12-14", "2025-12-14", "2025-12-15", "2025-12-15", "2025-12-15", "2025-12-15", "2025-12-15", "2025-12-15", "2025-12-16", "2025-12-16", "2025-12-16", "2025-12-16", "2025-12-16", "2025-12-16", "2025-12-17", "2025-12-17", "2025-12-17", "2025-12-17", "2025-12-17", "2025-12-17", "2025-12-18", "2025-12-18", "2025-12-18", "2025-12-18", "2025-12-18", "2025-12-18", "2025-12-19", "2025-12-19", "2025-12-19", "2025-12-19", "2025-12-19", "2025-12-19", "2025-12-20", "2025-12-20", "2025-12-20", "2025-12-20", "2025-12-20", "2025-12-20", "2025-12-21", "2025-12-21", "2025-12-21", "2025-12-21", "2025-12-21", "2025-12-21", "2025-12-22", "2025-12-22", "2025-12-22", "2025-12-22", "2025-12-22", "2025-12-22", "2025-12-23", "2025-12-23", "2025-12-23", "2025-12-23", "2025-12-23", "2025-12-23", "2025-12-24", "2025-12-24", "2025-12-24", "2025-12-24", "2025-12-24", "2025-12-24", "2025-12-25", "2025-12-25", "2025-12-25", "2025-12-25", "2025-12-25", "2025-12-25", "2025-12-26", "2025-12-26", "2025-12-26", "2025-12-26", "2025-12-26", "2025-12-26", "2025-12-27", "2025-12-27", "2025-12-27", "2025-12-27", "2025-12-27", "2025-12-27", "2025-12-28", "2025-12-28", "2025-12-28", "2025-12-28", "2025-12-28", "2025-12-28", "2025-12-29", "2025-12-29", "2025-12-29", "2025-12-29", "2025-12-29", "2025-12-29", "2025-12-30", "2025-12-30", "2025-12-30", "2025-12-30", "2025-12-30", "2025-12-30", "2025-12-31", "2025-12-31", "2025-12-31", "2025-12-31", "2025-12-31", "2025-12-31", "2026-01-01", "2026-01-01", "2026-01-01", "2026-01-01", "2026-01-01", "2026-01-01", "2026-01-02", "2026-01-02", "2026-01-02", "2026-01-02", "2026-01-02", "2026-01-02", "2026-01-03", "2026-01-03", "2026-01-03", "2026-01-03", "2026-01-03", "2026-01-03", "2026-01-04", "2026-01-04", "2026-01-04", "2026-01-04", "2026-01-04", "2026-01-04", "2026-01-05", "2026-01-05", "2026-01-05", "2026-01-05", "2026-01-05", "2026-01-05", "2026-01-06", "2026-01-06", "2026-01-06", "2026-01-06", "2026-01-06", "2026-01-06", "2026-01-07", "2026-01-07", "2026-01-07", "2026-01-07", "2026-01-07", "2026-01-07", "2026-01-08", "2026-01-08", "2026-01-08", "2026-01-08", "2026-01-08", "2026-01-08", "2026-01-09", "2026-01-09", "2026-01-09", "2026-01-09", "2026-01-09", "2026-01-09", "2026-01-10", "2026-01-10", "2026-01-10", "2026-01-10", "2026-01-10", "2026-01-10", "2026-01-11", "2026-01-11", "2026-01-11", "2026-01-11", "2026-01-11", "2026-01-11", "2026-01-12", "2026-01-12", "2026-01-12", "2026-01-12", "2026-01-12", "2026-01-12", "2026-01-13", "2026-01-13", "2026-01-13", "2026-01-13", "2026-01-13", "2026-01-13", "2026-01-14", "2026-01-14", "2026-01-14", "2026-01-14", "2026-01-14", "2026-01-14", "2026-01-15", "2026-01-15", "2026-01-15", "2026-01-15", "2026-01-15", "2026-01-15", "2026-01-16", "2026-01-16", "2026-01-16", "2026-01-16", "2026-01-16", "2026-01-16", "2026-01-17", "2026-01-17", "2026-01-17", "2026-01-17", "2026-01-17", "2026-01-17", "2026-01-18", "2026-01-18", "2026-01-18", "2026-01-18", "2026-01-18", "2026-01-18", "2026-01-19", "2026-01-19", "2026-01-19", "2026-01-19", "2026-01-19", "2026-01-19", "2026-01-20", "2026-01-20", "2026-01-20", "2026-01-20", "2026-01-20", "2026-01-20", "2026-01-21", "2026-01-21", "2026-01-21", "2026-01-21", "2026-01-21", "2026-01-21", "2026-01-22", "2026-01-22", "2026-01-22", "2026-01-22", "2026-01-22", "2026-01-22", "2026-01-23", "2026-01-23", "2026-01-23", "2026-01-23", "2026-01-23", "2026-01-23", "2026-01-24", "2026-01-24", "2026-01-24", "2026-01-24", "2026-01-24", "2026-01-24", "2026-01-25", "2026-01-25", "2026-01-25", "2026-01-25", "2026-01-25", "2026-01-25", "2026-01-26", "2026-01-26", "2026-01-26", "2026-01-26", "2026-01-26", "2026-01-26", "2026-01-27", "2026-01-27", "2026-01-27", "2026-01-27", "2026-01-27", "2026-01-27", "2026-01-28", "2026-01-28", "2026-01-28", "2026-01-28", "2026-01-28", "2026-01-28", "2026-01-29", "2026-01-29", "2026-01-29", "2026-01-29", "2026-01-29", "2026-01-29", "2026-01-30", "2026-01-30", "2026-01-30", "2026-01-30", "2026-01-30", "2026-01-30", "2026-01-31", "2026-01-31", "2026-01-31", "2026-01-31", "2026-01-31", "2026-01-31", "2026-02-01", "2026-02-01", "2026-02-01", "2026-02-01", "2026-02-01", "2026-02-01", "2026-02-02", "2026-02-02", "2026-02-02", "2026-02-02", "2026-02-02", "2026-02-02", "2026-02-03", "2026-02-03", "2026-02-03", "2026-02-03", "2026-02-03", "2026-02-03", "2026-02-04", "2026-02-04", "2026-02-04", "2026-02-04", "2026-02-04", "2026-02-04", "2026-02-05", "2026-02-05", "2026-02-05", "2026-02-05", "2026-02-05", "2026-02-05", "2026-02-06", "2026-02-06", "2026-02-06", "2026-02-06", "2026-02-06", "2026-02-06", "2026-02-07", "2026-02-07", "2026-02-07", "2026-02-07", "2026-02-07", "2026-02-07", "2026-02-08", "2026-02-08", "2026-02-08", "2026-02-08", "2026-02-08", "2026-02-08", "2026-02-09", "2026-02-09", "2026-02-09", "2026-02-09", "2026-02-09", "2026-02-09", "2026-02-10", "2026-02-10", "2026-02-10", "2026-02-10", "2026-02-10", "2026-02-10", "2026-02-11", "2026-02-11", "2026-02-11", "2026-02-11", "2026-02-11", "2026-02-11", "2026-02-12", "2026-02-12", "2026-02-12", "2026-02-12", "2026-02-12", "2026-02-12", "2026-02-13", "2026-02-13", "2026-02-13", "2026-02-13", "2026-02-13", "2026-02-13", "2026-02-14", "2026-02-14", "2026-02-14", "2026-02-14", "2026-02-14", "2026-02-14", "2026-02-15", "2026-02-15", "2026-02-15", "2026-02-15", "2026-02-15", "2026-02-15", "2026-02-16", "2026-02-16", "2026-02-16", "2026-02-16", "2026-02-16", "2026-02-16", "2026-02-17", "2026-02-17", "2026-02-17", "2026-02-17", "2026-02-17", "2026-02-17", "2026-02-18", "2026-02-18", "2026-02-18", "2026-02-18", "2026-02-18"],
+    datasets: [{
+      label: 'Equity ($)',
+      data: [100000.0, 99961.43, 99965.48, 99935.89, 99943.9, 99928.41, 99938.18, 99930.62, 99943.51, 99957.27, 99968.96, 99977.37, 99986.22, 99993.67, 100004.39, 100014.06, 100022.28, 100029.94, 100036.67, 100045.77, 100055.9, 100065.06, 100073.73, 100083.34, 100092.24, 100086.31, 100094.32, 100102.41, 100110.67, 100118.3, 100124.04, 100128.49, 100135.81, 100143.71, 100150.77, 100158.42, 100165.65, 100154.79, 100163.14, 100160.88, 100168.33, 100161.32, 100169.53, 100177.88, 100184.99, 100193.29, 100201.1, 100196.2, 100206.61, 100217.44, 100228.17, 100238.58, 100248.23, 100257.38, 100267.92, 100277.63, 100285.27, 100292.97, 100300.69, 100307.3, 100315.51, 100323.02, 100330.07, 100339.85, 100347.81, 100355.16, 100361.62, 100354.96, 100362.79, 100370.96, 100378.73, 100386.8, 100394.95, 100402.81, 100410.78, 100401.67, 100412.88, 100425.7, 100435.52, 100445.93, 100454.49, 100460.4, 100465.61, 100471.72, 100478.47, 100486.22, 100494.2, 100500.87, 100506.66, 100514.37, 100522.24, 100530.13, 100537.77, 100545.78, 100551.33, 100540.06, 100545.43, 100537.45, 100545.65, 100552.29, 100560.33, 100568.87, 100577.38, 100586.62, 100595.5, 100603.2, 100611.64, 100602.36, 100610.81, 100619.11, 100627.55, 100636.55, 100646.26, 100638.22, 100647.88, 100656.89, 100666.54, 100676.19, 100684.87, 100692.93, 100701.19, 100709.04, 100717.18, 100726.35, 100730.35, 100739.25, 100748.72, 100744.88, 100753.72, 100722.98, 100729.1, 100701.1, 100706.5, 100683.09, 100689.72, 100696.55, 100703.16, 100707.74, 100713.9, 100723.16, 100731.68, 100741.37, 100750.29, 100739.79, 100749.0, 100759.33, 100768.6, 100777.85, 100787.15, 100797.21, 100807.15, 100816.21, 100824.3, 100831.44, 100837.87, 100843.48, 100850.24, 100856.29, 100863.12, 100842.33, 100850.98, 100857.69, 100866.09, 100874.63, 100882.06, 100892.02, 100904.18, 100913.43, 100925.98, 100937.17, 100947.51, 100957.78, 100966.66, 100976.97, 100987.8, 100998.55, 101008.93, 101016.92, 101023.5, 101031.7, 101040.5, 101024.08, 101032.04, 101039.83, 101048.23, 101056.29, 101063.5, 101069.36, 101075.68, 101081.92, 101088.84, 101097.33, 101105.61, 101114.26, 101123.27, 101132.52, 101141.16, 101149.65, 101157.51, 101165.09, 101172.71, 101180.31, 101187.79, 101196.75, 101204.46, 101212.87, 101220.42, 101226.55, 101234.44, 101245.75, 101255.05, 101263.55, 101272.14, 101280.61, 101289.34, 101298.87, 101306.88, 101315.24, 101321.98, 101330.62, 101338.28, 101346.16, 101350.39, 101355.67, 101361.73, 101370.17, 101379.05, 101387.52, 101400.35, 101417.48, 101430.87, 101444.15, 101456.78, 101468.41, 101482.28, 101496.4, 101514.29, 101530.16, 101546.23, 101560.07, 101571.58, 101583.39, 101594.9, 101605.18, 101614.35, 101626.07, 101634.5, 101613.9, 101620.8, 101626.84, 101632.39, 101638.45, 101644.34, 101641.98, 101648.96, 101655.2, 101660.31, 101665.34, 101670.56, 101674.56, 101678.74, 101682.98, 101686.92, 101690.78, 101694.93, 101699.32, 101703.46, 101707.63, 101711.48, 101715.68, 101719.68, 101723.65, 101728.33, 101732.4, 101736.7, 101740.89, 101744.9, 101749.34, 101753.7, 101757.98, 101761.74, 101765.37, 101768.9, 101739.2, 101748.32, 101740.15, 101748.45, 101747.16, 101756.43, 101766.48, 101774.56, 101782.96, 101792.38, 101802.47, 101809.82, 101816.89, 101825.29, 101836.06, 101844.71, 101852.66, 101854.92, 101855.07, 101858.17, 101859.74, 101860.62, 101863.42, 101867.27, 101858.73, 101861.07, 101855.51, 101859.81, 101865.28, 101865.09, 101866.68, 101868.89, 101871.33, 101873.9, 101877.75, 101882.24, 101887.47, 101892.24, 101873.33, 101880.24, 101885.96, 101891.54, 101896.26, 101900.09, 101886.05, 101898.85, 101911.9, 101928.47, 101941.23, 101953.3, 101963.52, 101974.36, 101986.11, 101996.73, 102006.81, 102016.05, 102025.66, 102029.09, 102030.15, 102034.35, 102039.55, 102043.0, 102047.06, 102051.09, 102053.62, 102056.6, 102060.6, 102064.64, 102069.21, 102073.55, 102050.75, 102055.73, 102061.05, 102067.88, 102074.46, 102081.19, 102087.83, 102093.28, 102097.37, 102102.04, 102107.73, 102114.56, 102121.49, 102126.83, 102131.59, 102137.26, 102142.24, 102148.52, 102155.98, 102163.98, 102171.14, 102177.34, 102163.84, 102171.21, 102179.65, 102187.89, 102195.68, 102203.1, 102210.73, 102218.42, 102228.08, 102235.37, 102242.88, 102250.47, 102258.04, 102265.56, 102273.16, 102280.75, 102288.15, 102295.73, 102304.13, 102311.94, 102319.51, 102326.92, 102334.52, 102342.16, 102349.5, 102355.87, 102338.91, 102349.2, 102358.37, 102367.73, 102377.34, 102387.47, 102397.33, 102407.85, 102421.99, 102431.53, 102441.86, 102452.36, 102463.0, 102473.98, 102481.74, 102484.67, 102488.33, 102482.4, 102462.67, 102466.74, 102472.38, 102477.94, 102483.92, 102489.8, 102494.93, 102496.84, 102499.71, 102506.6, 102516.56, 102525.37, 102532.76, 102540.16, 102547.36, 102554.57, 102561.74, 102568.35, 102574.29, 102580.74, 102563.34, 102571.32, 102578.84, 102586.04, 102592.35, 102596.6, 102602.28, 102608.95, 102602.26, 102606.19, 102601.15, 102605.47, 102611.72, 102618.99, 102617.76, 102624.92, 102632.44, 102641.16, 102649.14, 102657.27, 102662.0, 102666.21, 102669.32, 102670.21, 102671.63, 102675.22, 102677.87, 102679.33, 102664.17, 102668.01, 102671.27, 102674.51, 102676.75, 102682.21, 102687.34, 102689.74, 102693.0, 102694.58, 102697.47, 102700.43, 102701.53, 102705.81, 102710.41, 102715.91, 102722.82, 102727.93, 102733.44, 102738.67, 102743.55, 102748.38, 102755.91, 102764.14, 102769.06, 102773.85, 102779.38, 102786.93, 102791.88, 102799.16, 102804.43, 102811.66, 102820.38, 102827.71, 102822.87, 102830.6, 102825.5, 102831.28, 102819.19, 102827.09, 102834.46, 102841.62, 102850.68, 102858.89, 102866.48, 102873.78, 102881.75, 102889.36, 102895.98, 102902.9, 102909.89, 102915.93, 102922.36, 102931.0, 102936.96, 102945.66, 102936.51, 102944.99, 102953.45, 102961.51, 102968.82, 102976.15, 102982.44, 102988.54, 102994.43, 103002.94, 103011.93, 103020.41, 103027.7, 103036.41, 103043.11, 103048.88, 103044.87, 103049.69, 103054.91, 103059.73, 103064.32, 103068.74, 103065.55, 103071.8, 103078.41, 103087.07, 103092.62, 103094.66, 103098.81, 103105.63, 103112.45, 103119.02, 103125.84, 103133.91, 103142.67, 103154.5, 103168.23, 103180.7, 103190.89, 103200.41, 103208.64, 103216.91, 103211.81, 103219.22, 103215.66, 103222.18, 103228.99, 103236.51, 103244.35, 103253.91, 103261.93, 103269.94, 103260.38, 103268.54, 103276.82, 103286.48, 103294.1, 103302.37, 103311.38, 103319.16, 103328.05, 103341.7, 103352.99, 103362.49, 103372.44, 103382.27, 103392.65, 103404.03, 103413.61, 103423.34, 103424.49, 103432.39, 103431.67, 103440.87, 103450.37, 103462.88, 103475.51, 103486.89, 103498.8, 103511.0, 103509.85, 103518.05, 103512.94, 103520.86, 103528.96, 103538.6, 103551.59, 103562.77, 103572.37, 103582.37, 103592.14, 103601.48, 103612.46, 103625.04, 103635.3, 103644.87, 103654.84, 103666.71, 103678.46, 103689.37, 103697.08, 103706.73, 103714.97, 103723.16, 103731.22, 103738.44, 103749.04, 103761.01, 103771.72, 103781.63, 103791.87, 103801.28, 103808.96, 103815.73, 103823.48, 103831.61, 103840.25, 103848.54, 103856.06, 103863.0, 103870.26, 103876.19, 103885.88, 103896.14, 103906.9, 103916.69, 103925.35, 103933.98, 103945.03, 103955.81, 103964.63, 103971.76, 103978.05, 103984.82, 103994.37, 104002.85, 104009.33, 104017.03, 104025.35, 104033.01, 104041.22, 104048.41, 104051.72, 104049.38, 104051.74, 104053.02, 104056.23, 104055.86, 104043.09, 104044.83, 104024.83, 104028.29, 104034.23, 104040.21, 104046.36, 104049.8, 104052.78, 104053.74, 104032.3, 104029.33, 104023.41, 104022.17, 104011.93, 104015.64, 104019.46, 104022.49, 104027.45, 104033.6, 104038.24, 104044.0, 104037.46, 104041.91, 104024.03, 104032.96, 104041.68, 104049.08, 104056.68, 104065.22, 104071.16, 104077.47, 104084.44, 104091.22, 104098.13, 104104.84, 104112.36, 104120.05, 104126.14, 104132.6, 104139.7, 104146.39, 104154.53, 104162.49, 104170.03, 104176.82, 104184.21, 104193.26, 104179.86, 104187.67, 104196.6, 104204.99, 104214.79, 104223.36, 104232.13, 104240.35, 104248.43, 104256.73, 104265.2, 104272.73, 104279.65, 104286.69, 104293.82, 104301.32, 104310.71, 104319.3, 104327.28, 104335.72, 104343.62, 104351.64, 104360.62, 104368.39, 104375.16, 104381.93, 104388.65, 104396.02, 104402.63, 104409.74, 104416.12, 104423.75, 104430.84, 104439.84, 104448.52, 104457.47, 104467.57, 104477.52, 104487.5, 104496.15, 104505.06, 104514.36, 104523.09, 104531.12, 104539.39, 104547.61, 104555.42, 104564.17, 104574.24, 104583.23, 104592.0, 104600.63, 104608.12, 104616.12, 104623.77, 104631.69, 104639.61, 104647.5, 104655.63, 104665.11, 104672.11, 104677.32, 104683.48, 104689.79, 104697.08, 104702.64, 104709.31, 104716.02, 104723.26, 104730.02, 104736.39, 104741.93, 104747.95, 104747.01, 104707.75, 104710.17, 104714.22, 104718.94, 104721.53, 104727.47, 104733.19, 104739.19, 104742.36, 104756.4, 104767.0, 104772.47, 104778.83, 104783.39, 104772.71, 104778.4, 104791.53, 104804.6, 104818.81, 104832.11, 104842.73, 104850.23, 104858.65, 104865.87, 104856.97, 104842.56, 104827.41, 104831.6, 104828.23, 104821.41, 104802.34, 104799.7, 104801.49, 104801.4, 104801.66, 104805.01, 104807.79, 104808.97, 104807.2, 104803.76, 104791.15, 104772.42, 104717.06, 104715.95, 104718.17, 104714.88, 104708.77, 104699.41, 104691.23, 104686.1, 104676.93, 104667.84, 104653.39, 104652.74, 104649.39, 104655.4, 104659.74, 104663.68, 104619.47, 104630.43, 104643.87, 104656.21, 104670.99, 104685.69, 104694.73, 104699.7, 104716.45, 104727.46, 104736.95, 104750.92, 104764.53, 104777.2, 104788.45, 104802.37, 104818.0, 104830.16, 104840.97, 104853.51, 104863.69, 104879.99, 104902.36, 104922.34, 104934.18, 104939.03, 104928.67, 104937.58, 104944.44, 104951.7, 104958.13, 104966.16, 104974.33, 104981.77, 104988.57, 104995.26, 105001.0, 105006.66, 105012.46, 105017.7, 105023.19, 105029.1, 105035.03, 105038.54, 105048.73, 105056.77, 105066.92, 105077.56, 105088.89, 105093.78, 105075.77, 105083.69, 105092.24, 105099.41, 105105.89, 105112.46, 105118.53, 105124.56, 105130.67, 105135.88, 105144.57, 105152.58, 105160.27, 105166.88, 105171.49, 105171.29, 105175.81, 105181.66, 105189.18, 105195.71, 105180.75, 105188.35, 105192.02, 105193.53, 105192.63, 105192.24, 105196.49, 105200.63, 105203.76, 105206.27, 105209.02, 105210.51, 105213.82, 105215.23, 105216.88, 105216.64, 105200.64, 105203.49, 105208.2, 105215.16, 105221.52, 105228.51, 105215.73, 105225.83, 105234.53, 105244.15, 105252.64, 105259.66, 105253.77, 105261.37, 105262.13, 105270.82, 105270.21, 105277.01, 105284.95, 105286.37, 105290.04, 105285.76, 105283.59, 105282.09, 105265.68, 105267.49, 105269.96, 105272.34, 105259.15, 105264.71, 105270.29, 105275.12, 105261.17, 105267.1, 105273.94, 105280.43, 105286.95, 105295.54, 105302.77, 105309.72, 105315.6, 105321.8, 105328.4, 105335.85, 105343.18, 105349.61, 105355.17, 105360.37, 105365.27, 105368.94, 105373.91, 105378.87, 105373.78, 105379.0, 105384.05, 105387.62, 105383.5, 105388.45, 105391.57, 105395.15, 105397.53, 105402.49, 105405.92, 105414.01, 105423.78, 105433.65, 105441.48, 105446.12, 105452.06, 105459.35, 105467.16, 105474.37, 105479.44, 105486.09, 105483.89, 105490.05, 105487.87, 105494.63, 105501.16, 105507.96, 105513.57, 105518.28, 105523.57, 105527.08, 105519.47, 105522.2, 105524.52, 105523.24, 105523.6, 105526.73, 105529.43, 105530.46, 105530.46, 105528.99, 105527.43, 105525.53, 105524.1, 105522.56, 105496.3, 105500.62, 105504.66, 105507.57, 105512.17, 105514.75, 105519.82, 105525.9, 105530.36, 105535.03, 105533.14, 105534.12, 105508.2, 105512.98, 105517.21, 105515.54, 105516.24, 105515.37, 105512.52, 105509.32, 105507.16, 105504.68, 105501.9, 105495.26, 105468.16, 105460.53, 105439.63, 105438.27, 105432.3, 105431.72, 105434.55, 105435.59, 105434.32, 105435.37, 105438.91, 105445.51, 105451.91, 105455.73, 105433.4, 105439.02, 105444.34, 105449.22, 105432.25, 105435.53, 105418.94, 105426.1, 105432.22, 105434.03, 105434.35, 105434.8, 105433.17, 105431.43, 105434.82, 105437.68, 105440.33, 105443.82, 105447.73, 105451.58, 105430.29, 105434.7, 105422.21, 105428.33, 105434.4, 105440.49, 105446.89, 105452.66, 105457.98, 105463.97, 105470.39, 105476.87, 105482.72, 105488.33, 105494.03, 105499.19, 105497.8, 105497.53, 105469.69, 105476.29, 105482.6, 105488.02, 105493.33, 105498.43, 105504.04, 105509.05, 105514.34, 105519.42, 105523.75, 105529.39, 105536.94, 105544.26, 105549.93, 105553.74, 105555.88, 105557.06, 105530.03, 105530.86, 105533.63, 105539.98, 105539.86, 105547.29, 105553.93, 105560.91, 105568.19, 105575.39, 105582.47, 105589.59, 105597.46, 105605.74, 105612.86, 105616.56, 105622.56, 105628.16, 105634.0, 105641.11, 105648.84, 105653.13, 105659.49, 105667.5, 105675.61, 105684.5, 105693.81, 105700.71, 105708.22, 105715.76, 105722.87, 105729.12, 105734.6, 105740.29, 105746.23, 105752.01, 105758.68, 105766.71, 105773.36, 105778.71, 105783.45, 105786.69, 105781.95, 105787.66, 105794.17, 105800.54, 105797.79, 105803.61, 105809.42, 105816.13, 105822.57, 105829.65, 105836.8, 105842.99, 105848.41, 105854.54, 105859.67, 105864.33, 105859.0, 105862.82, 105867.13, 105871.54, 105877.02, 105882.15, 105879.08, 105885.37, 105891.28, 105896.98, 105902.55, 105909.2, 105915.47, 105921.82, 105910.02, 105916.71, 105910.07, 105915.89, 105909.0, 105915.6, 105921.74, 105927.71, 105932.91, 105937.63, 105943.4, 105950.29, 105957.87, 105963.97, 105969.8, 105973.71, 105978.95, 105982.39, 105987.09, 105992.04, 105995.91, 106000.51, 106004.1, 106007.91, 106013.24, 106017.08, 106022.6, 106028.73, 106035.6, 106035.6, 106003.6, 106007.27, 106010.53, 106014.8, 106018.82, 106019.68, 106024.12, 106028.35, 106034.44, 106040.37, 106046.15, 106053.29, 106060.24, 106065.71, 106069.36, 106071.02, 106062.34, 106055.87, 106048.18, 106053.39, 106058.58, 106063.96, 106062.02, 106070.84, 106080.3, 106090.59, 106081.4, 106087.86, 106094.33, 106100.99, 106108.8, 106112.39, 106113.55, 106110.7, 106081.05, 106080.82, 106087.12, 106097.27, 106108.51, 106118.78, 106111.71, 106121.59, 106130.62, 106139.11, 106146.46, 106153.0, 106160.08, 106165.47, 106169.36, 106173.23, 106176.89, 106179.73, 106183.54, 106187.47, 106191.24, 106195.97, 106178.3, 106187.66, 106176.26, 106186.71, 106195.92, 106205.6, 106214.56, 106223.37, 106232.9, 106238.75, 106244.27, 106247.73, 106212.63, 106220.57, 106225.87, 106228.36, 106230.31, 106233.1, 106235.8, 106238.38, 106241.13, 106243.45, 106245.19, 106247.66, 106250.03, 106251.93, 106253.89, 106255.99, 106240.49, 106244.87, 106251.92, 106259.17, 106263.6, 106268.63, 106275.99, 106279.92, 106283.67, 106287.12, 106291.0, 106294.39, 106298.11, 106303.07, 106286.11, 106291.17, 106262.53, 106267.57, 106259.41, 106263.23, 106259.37, 106257.01, 106260.31, 106262.91, 106266.8, 106267.14, 106267.79, 106268.2, 106270.8, 106270.24, 106271.53, 106269.45, 106268.56, 106269.71, 106229.28, 106234.6, 106239.56, 106246.96, 106254.0, 106260.21, 106263.04, 106265.77, 106269.46, 106273.43, 106276.18, 106279.82, 106284.31, 106287.51, 106291.33, 106296.01, 106281.76, 106290.35, 106280.07, 106288.81, 106298.77, 106308.03, 106318.41, 106323.66, 106331.74, 106340.39, 106349.53, 106357.2, 106363.42, 106369.87, 106377.87, 106384.91, 106363.41, 106371.11, 106377.97, 106385.54, 106382.53, 106386.69, 106390.72, 106395.17, 106399.6, 106403.93, 106399.56, 106404.39, 106409.68, 106414.49, 106419.2, 106423.89, 106428.19, 106432.94, 106438.01, 106443.14, 106447.98, 106452.73, 106437.19, 106437.41, 106328.92, 106300.97, 106280.32, 106270.59, 106272.2, 106275.32, 106277.17, 106276.92, 106254.85, 106256.48, 106260.06, 106267.08, 106274.67, 106280.24, 106275.19, 106275.53, 106275.15, 106278.15, 106252.67, 106257.29, 106265.06, 106262.96, 106247.44, 106246.77, 106250.53, 106256.8, 106258.9, 106252.74, 106211.64, 106166.55, 106137.58, 106127.72, 106124.03, 106123.63, 106112.88, 106108.65, 106085.56, 106063.43, 106057.94, 106054.98, 106026.88, 106017.11, 106014.53, 106008.08, 105999.17, 105982.1, 105961.72, 105952.39, 105951.9, 105944.11, 105919.65, 105907.34, 105905.95, 105903.14, 105893.86, 105890.24, 105873.57, 105874.67, 105872.69, 105875.62, 105879.37, 105883.28, 105883.55, 105878.39, 105862.31, 105867.11, 105871.09, 105867.55, 105852.13, 105827.49, 105816.68, 105817.91, 105803.48, 105789.56, 105784.04, 105786.87, 105789.16, 105782.71, 105782.77, 105783.19, 105785.13, 105786.98, 105787.1, 105785.22, 105785.36, 105777.91, 105768.84, 105765.98, 105767.46, 105765.67, 105767.75, 105769.29, 105771.41, 105775.71, 105779.3, 105782.51, 105787.03, 105792.06, 105798.15, 105802.6, 105806.73, 105809.93, 105803.11, 105806.51, 105801.09, 105804.19, 105808.31, 105810.5, 105772.13, 105765.51, 105757.18, 105757.73, 105755.27, 105763.39, 105759.47, 105765.43, 105766.57, 105756.12, 105726.06, 105683.76, 105636.32, 105589.19, 105565.58, 105560.66, 105561.92, 105565.96, 105538.85, 105545.3, 105554.23, 105561.92, 105568.34, 105577.96, 105586.98, 105595.51, 105604.35, 105613.77, 105620.77, 105627.35, 105633.96, 105638.48, 105629.89, 105635.87, 105638.12, 105629.47, 105616.77, 105624.26, 105631.33, 105638.79, 105644.57, 105648.27, 105654.18, 105662.81, 105670.64, 105675.37, 105683.98, 105693.61, 105705.11, 105717.29, 105724.84, 105730.87, 105737.82, 105760.5, 105786.45, 105812.63, 105837.49, 105858.63, 105869.48, 105873.93, 105850.11, 105855.4, 105860.73, 105866.66, 105871.65, 105876.53, 105881.13, 105887.2, 105892.77, 105899.95, 105904.59, 105909.83, 105915.62, 105921.48, 105913.14, 105915.64, 105909.7, 105911.89, 105913.02, 105914.64, 105898.18, 105903.14, 105908.84, 105915.26, 105920.29, 105925.94, 105929.98, 105935.36, 105941.43, 105938.95, 105936.2, 105936.76, 105939.43, 105942.27, 105946.06, 105945.86, 105917.03, 105923.15, 105929.43, 105931.64, 105933.11, 105936.06, 105920.5, 105924.34, 105930.37, 105935.68, 105942.03, 105946.33, 105924.28, 105929.75, 105935.64, 105940.73, 105940.56, 105939.44, 105943.29, 105948.59, 105953.72, 105959.92, 105966.48, 105971.62, 105975.52, 105982.31, 105989.43, 105997.04, 106005.99, 106011.75, 106019.7, 106026.03, 106032.53, 106039.17, 106044.78, 106047.55, 106031.64, 106038.58, 106045.85, 106053.02, 106060.14, 106064.48, 106070.05, 106075.61, 106078.3, 106077.01, 106078.15, 106081.3, 106083.93, 106086.46, 106087.62, 106091.46, 106070.37, 106076.97, 106082.27, 106075.82, 106073.77, 106073.94, 106074.76, 106078.18, 106058.61, 106062.56, 106068.65, 106074.17, 106080.25, 106086.8, 106092.63, 106098.46, 106104.79, 106109.67, 106114.36, 106119.36, 106125.7, 106131.38, 106137.19, 106142.38, 106149.15, 106155.95, 106162.82, 106169.92, 106177.08, 106184.08, 106190.93, 106198.1, 106205.2, 106212.61, 106220.04, 106226.78, 106232.06, 106237.44, 106244.12, 106249.17, 106254.51, 106258.5, 106242.2, 106220.31, 106214.23, 106218.4, 106222.84, 106221.11, 106216.12, 106220.85, 106224.95, 106218.86, 106189.68, 106185.75, 106184.26, 106180.1, 106178.85, 106180.72, 106167.42, 106165.04, 106145.56, 106144.02, 106138.85, 106126.61, 106119.94, 106122.71, 106125.11, 106126.33, 106130.6, 106134.89, 106114.52, 106123.36, 106134.08, 106143.4, 106155.59, 106164.86, 106173.06, 106181.55, 106187.7, 106189.27, 106186.61, 106183.79, 106187.12, 106193.01, 106195.56, 106188.01, 106050.14, 105890.85, 105793.99, 105678.86, 105598.54, 105546.43, 105486.55, 105413.33, 105392.91, 105389.12, 105378.38, 105368.51, 105366.94, 105367.26, 105370.97, 105376.2, 105349.06, 105355.72, 105360.94, 105366.18, 105368.39, 105370.11, 105372.53, 105376.42, 105366.26, 105363.8, 105359.56, 105374.84, 105386.5, 105393.89, 105391.29, 105391.75, 105364.72, 105367.15, 105367.48, 105365.54, 105366.16, 105364.29, 105362.65, 105363.57, 105364.73, 105366.0, 105367.66, 105369.27, 105370.17, 105372.27, 105374.18, 105376.01, 105339.61, 105342.68, 105344.21, 105347.06, 105332.35, 105336.83, 105331.57, 105334.03, 105337.68, 105340.9, 105342.09, 105343.25, 105312.31, 105315.62, 105318.2, 105322.6, 105325.72, 105328.75, 105326.69, 105324.21, 105316.74, 105317.61, 105320.01, 105320.38, 105318.32, 105317.05, 105318.75, 105320.85, 105322.78, 105324.3, 105300.23, 105299.57, 105300.47, 105302.83, 105306.5, 105308.71, 105311.71, 105315.37, 105318.8, 105317.62, 105307.28, 105305.78, 105296.18, 105299.17, 105301.05, 105303.21, 105303.51, 105305.42, 105310.23, 105314.05, 105319.11, 105325.41, 105328.25, 105330.94, 105332.54, 105332.2, 105331.6, 105329.61, 105330.65, 105331.49, 105334.06, 105338.74, 105343.37, 105346.19, 105330.46, 105333.12, 105335.34, 105339.07, 105343.71, 105347.66, 105351.02, 105353.68, 105357.67, 105362.86, 105368.39, 105373.26, 105378.58, 105383.38, 105388.6, 105395.86, 105402.32, 105408.31, 105413.6, 105418.02, 105421.31, 105425.91, 105430.77, 105434.91, 105437.32, 105439.12, 105439.03, 105440.56, 105443.19, 105447.35, 105452.19, 105455.79, 105458.63, 105462.0, 105464.33, 105467.72, 105471.25, 105470.41, 105461.54, 105465.58, 105459.76, 105464.93, 105470.67, 105474.8, 105479.79, 105480.85, 105482.46, 105486.99, 105491.08, 105495.76, 105500.81, 105506.23, 105511.42, 105516.15, 105520.61, 105524.37, 105528.61, 105532.96, 105538.14, 105542.88, 105546.44, 105550.31, 105554.65, 105557.83, 105554.26, 105558.78, 105544.57, 105554.49, 105538.13, 105549.37, 105558.92, 105568.39, 105575.62, 105581.0, 105586.12, 105590.52, 105593.59, 105599.09, 105577.6, 105575.21, 105557.7, 105547.12, 105543.44, 105539.33, 105537.62, 105532.02, 105509.38, 105499.59, 105492.55, 105487.94, 105478.86, 105483.4, 105473.74, 105475.78, 105462.02, 105464.76, 105443.49, 105448.27, 105451.95, 105457.45, 105463.2, 105470.41, 105476.69, 105480.85, 105485.22, 105492.0, 105496.86, 105504.8, 105507.64, 105508.8, 105491.65, 105500.38, 105509.52, 105516.55, 105521.29, 105522.45, 105524.21, 105526.61, 105531.92, 105537.26, 105543.43, 105549.4, 105555.25, 105560.95, 105567.02, 105571.53, 105576.23, 105579.87, 105583.46, 105586.07, 105590.42, 105593.61, 105579.42, 105576.66, 105578.57, 105579.81, 105581.47, 105583.26, 105584.64, 105586.69, 105588.96, 105589.54, 105588.93, 105590.48, 105590.7, 105591.78, 105591.05, 105579.63, 105572.27, 105563.26, 105553.67, 105544.2, 105542.39, 105544.35, 105543.0, 105514.08, 105462.23, 105426.57, 105404.91, 105400.15, 105389.73, 105379.11, 105360.11, 105346.56, 105335.85, 105328.61, 105324.58, 105322.01, 105304.22, 105282.39, 105274.54, 105269.95, 105268.6, 105263.56, 105249.93, 105232.37, 105210.59, 105202.37, 105196.23, 105184.36, 105171.38, 105164.26, 105162.06, 105161.75, 105163.03, 105164.44, 105143.61, 105136.32, 105077.43, 105073.97, 105073.09, 105077.05, 105083.23, 105090.12, 105096.44, 105100.82, 105106.31, 105114.34, 105121.52, 105126.76, 105112.84, 105116.73, 105119.67, 105122.92, 105124.96, 105126.75, 105128.3, 105132.26, 105136.16, 105139.52, 105140.42, 105140.32, 105141.78, 105146.26, 105154.57, 105160.12, 105134.91, 105139.19, 105147.68, 105151.66, 105148.71, 105148.7, 105140.86, 105142.39, 105131.51, 105133.89, 105137.45, 105144.93, 105152.74, 105158.54, 105160.75, 105165.36, 105163.07, 105167.41, 105170.9, 105178.82, 105188.45, 105197.38, 105206.84, 105215.17, 105221.41, 105224.29, 105228.22, 105233.17, 105239.08, 105243.06, 105247.15, 105248.52, 105252.79, 105259.56, 105265.27, 105272.6, 105279.56, 105287.81, 105294.95, 105304.67, 105313.55, 105323.05, 105335.29, 105344.92, 105354.02, 105363.3, 105372.38, 105379.83, 105387.05, 105396.25, 105405.56, 105414.64, 105424.61, 105434.63, 105442.57, 105448.68, 105456.35, 105463.86, 105473.23, 105483.38, 105491.4, 105498.16, 105504.89, 105512.03, 105519.2, 105526.83, 105533.62, 105541.9, 105549.25, 105555.88, 105563.85, 105571.26, 105579.41, 105587.93, 105570.49, 105577.16, 105584.69, 105592.79, 105599.86, 105606.96, 105613.83, 105620.23, 105626.86, 105633.38, 105639.66, 105645.6, 105651.74, 105657.98, 105664.08, 105663.85, 105646.47, 105641.78, 105633.5, 105617.39, 105607.76, 105602.46, 105596.2, 105595.11, 105578.41, 105573.73, 105544.94, 105525.7, 105520.14, 105513.4, 105499.53, 105498.42, 105471.83, 105464.92, 105459.17, 105452.54, 105438.48, 105436.49, 105438.95, 105440.45, 105439.39],
+      borderColor: '#58a6ff', backgroundColor: 'rgba(88,166,255,0.1)',
+      fill: true, pointRadius: 0, borderWidth: 2,
+    }]
+  },
+  options: { ...chartOpts, plugins: { ...chartOpts.plugins,
+    annotation: { } } }
+});
+
+// Drawdown
+new Chart(document.getElementById('ddChart'), {
+  type: 'line',
+  data: {
+    labels: ["2025-02-18", "2025-02-19", "2025-02-19", "2025-02-19", "2025-02-19", "2025-02-19", "2025-02-19", "2025-02-20", "2025-02-20", "2025-02-20", "2025-02-20", "2025-02-20", "2025-02-20", "2025-02-21", "2025-02-21", "2025-02-21", "2025-02-21", "2025-02-21", "2025-02-21", "2025-02-22", "2025-02-22", "2025-02-22", "2025-02-22", "2025-02-22", "2025-02-22", "2025-02-23", "2025-02-23", "2025-02-23", "2025-02-23", "2025-02-23", "2025-02-23", "2025-02-24", "2025-02-24", "2025-02-24", "2025-02-24", "2025-02-24", "2025-02-24", "2025-02-25", "2025-02-25", "2025-02-25", "2025-02-25", "2025-02-25", "2025-02-25", "2025-02-26", "2025-02-26", "2025-02-26", "2025-02-26", "2025-02-26", "2025-02-26", "2025-02-27", "2025-02-27", "2025-02-27", "2025-02-27", "2025-02-27", "2025-02-27", "2025-02-28", "2025-02-28", "2025-02-28", "2025-02-28", "2025-02-28", "2025-02-28", "2025-03-01", "2025-03-01", "2025-03-01", "2025-03-01", "2025-03-01", "2025-03-01", "2025-03-02", "2025-03-02", "2025-03-02", "2025-03-02", "2025-03-02", "2025-03-02", "2025-03-03", "2025-03-03", "2025-03-03", "2025-03-03", "2025-03-03", "2025-03-03", "2025-03-04", "2025-03-04", "2025-03-04", "2025-03-04", "2025-03-04", "2025-03-04", "2025-03-05", "2025-03-05", "2025-03-05", "2025-03-05", "2025-03-05", "2025-03-05", "2025-03-06", "2025-03-06", "2025-03-06", "2025-03-06", "2025-03-06", "2025-03-06", "2025-03-07", "2025-03-07", "2025-03-07", "2025-03-07", "2025-03-07", "2025-03-07", "2025-03-08", "2025-03-08", "2025-03-08", "2025-03-08", "2025-03-08", "2025-03-08", "2025-03-09", "2025-03-09", "2025-03-09", "2025-03-09", "2025-03-09", "2025-03-09", "2025-03-10", "2025-03-10", "2025-03-10", "2025-03-10", "2025-03-10", "2025-03-10", "2025-03-11", "2025-03-11", "2025-03-11", "2025-03-11", "2025-03-11", "2025-03-11", "2025-03-12", "2025-03-12", "2025-03-12", "2025-03-12", "2025-03-12", "2025-03-12", "2025-03-13", "2025-03-13", "2025-03-13", "2025-03-13", "2025-03-13", "2025-03-13", "2025-03-14", "2025-03-14", "2025-03-14", "2025-03-14", "2025-03-14", "2025-03-14", "2025-03-15", "2025-03-15", "2025-03-15", "2025-03-15", "2025-03-15", "2025-03-15", "2025-03-16", "2025-03-16", "2025-03-16", "2025-03-16", "2025-03-16", "2025-03-16", "2025-03-17", "2025-03-17", "2025-03-17", "2025-03-17", "2025-03-17", "2025-03-17", "2025-03-18", "2025-03-18", "2025-03-18", "2025-03-18", "2025-03-18", "2025-03-18", "2025-03-19", "2025-03-19", "2025-03-19", "2025-03-19", "2025-03-19", "2025-03-19", "2025-03-20", "2025-03-20", "2025-03-20", "2025-03-20", "2025-03-20", "2025-03-20", "2025-03-21", "2025-03-21", "2025-03-21", "2025-03-21", "2025-03-21", "2025-03-21", "2025-03-22", "2025-03-22", "2025-03-22", "2025-03-22", "2025-03-22", "2025-03-22", "2025-03-23", "2025-03-23", "2025-03-23", "2025-03-23", "2025-03-23", "2025-03-23", "2025-03-24", "2025-03-24", "2025-03-24", "2025-03-24", "2025-03-24", "2025-03-24", "2025-03-25", "2025-03-25", "2025-03-25", "2025-03-25", "2025-03-25", "2025-03-25", "2025-03-26", "2025-03-26", "2025-03-26", "2025-03-26", "2025-03-26", "2025-03-26", "2025-03-27", "2025-03-27", "2025-03-27", "2025-03-27", "2025-03-27", "2025-03-27", "2025-03-28", "2025-03-28", "2025-03-28", "2025-03-28", "2025-03-28", "2025-03-28", "2025-03-29", "2025-03-29", "2025-03-29", "2025-03-29", "2025-03-29", "2025-03-29", "2025-03-30", "2025-03-30", "2025-03-30", "2025-03-30", "2025-03-30", "2025-03-30", "2025-03-31", "2025-03-31", "2025-03-31", "2025-03-31", "2025-03-31", "2025-03-31", "2025-04-01", "2025-04-01", "2025-04-01", "2025-04-01", "2025-04-01", "2025-04-01", "2025-04-02", "2025-04-02", "2025-04-02", "2025-04-02", "2025-04-02", "2025-04-02", "2025-04-03", "2025-04-03", "2025-04-03", "2025-04-03", "2025-04-03", "2025-04-03", "2025-04-04", "2025-04-04", "2025-04-04", "2025-04-04", "2025-04-04", "2025-04-04", "2025-04-05", "2025-04-05", "2025-04-05", "2025-04-05", "2025-04-05", "2025-04-05", "2025-04-06", "2025-04-06", "2025-04-06", "2025-04-06", "2025-04-06", "2025-04-06", "2025-04-07", "2025-04-07", "2025-04-07", "2025-04-07", "2025-04-07", "2025-04-07", "2025-04-08", "2025-04-08", "2025-04-08", "2025-04-08", "2025-04-08", "2025-04-08", "2025-04-09", "2025-04-09", "2025-04-09", "2025-04-09", "2025-04-09", "2025-04-09", "2025-04-10", "2025-04-10", "2025-04-10", "2025-04-10", "2025-04-10", "2025-04-10", "2025-04-11", "2025-04-11", "2025-04-11", "2025-04-11", "2025-04-11", "2025-04-11", "2025-04-12", "2025-04-12", "2025-04-12", "2025-04-12", "2025-04-12", "2025-04-12", "2025-04-13", "2025-04-13", "2025-04-13", "2025-04-13", "2025-04-13", "2025-04-13", "2025-04-14", "2025-04-14", "2025-04-14", "2025-04-14", "2025-04-14", "2025-04-14", "2025-04-15", "2025-04-15", "2025-04-15", "2025-04-15", "2025-04-15", "2025-04-15", "2025-04-16", "2025-04-16", "2025-04-16", "2025-04-16", "2025-04-16", "2025-04-16", "2025-04-17", "2025-04-17", "2025-04-17", "2025-04-17", "2025-04-17", "2025-04-17", "2025-04-18", "2025-04-18", "2025-04-18", "2025-04-18", "2025-04-18", "2025-04-18", "2025-04-19", "2025-04-19", "2025-04-19", "2025-04-19", "2025-04-19", "2025-04-19", "2025-04-20", "2025-04-20", "2025-04-20", "2025-04-20", "2025-04-20", "2025-04-20", "2025-04-21", "2025-04-21", "2025-04-21", "2025-04-21", "2025-04-21", "2025-04-21", "2025-04-22", "2025-04-22", "2025-04-22", "2025-04-22", "2025-04-22", "2025-04-22", "2025-04-23", "2025-04-23", "2025-04-23", "2025-04-23", "2025-04-23", "2025-04-23", "2025-04-24", "2025-04-24", "2025-04-24", "2025-04-24", "2025-04-24", "2025-04-24", "2025-04-25", "2025-04-25", "2025-04-25", "2025-04-25", "2025-04-25", "2025-04-25", "2025-04-26", "2025-04-26", "2025-04-26", "2025-04-26", "2025-04-26", "2025-04-26", "2025-04-27", "2025-04-27", "2025-04-27", "2025-04-27", "2025-04-27", "2025-04-27", "2025-04-28", "2025-04-28", "2025-04-28", "2025-04-28", "2025-04-28", "2025-04-28", "2025-04-29", "2025-04-29", "2025-04-29", "2025-04-29", "2025-04-29", "2025-04-29", "2025-04-30", "2025-04-30", "2025-04-30", "2025-04-30", "2025-04-30", "2025-04-30", "2025-05-01", "2025-05-01", "2025-05-01", "2025-05-01", "2025-05-01", "2025-05-01", "2025-05-02", "2025-05-02", "2025-05-02", "2025-05-02", "2025-05-02", "2025-05-02", "2025-05-03", "2025-05-03", "2025-05-03", "2025-05-03", "2025-05-03", "2025-05-03", "2025-05-04", "2025-05-04", "2025-05-04", "2025-05-04", "2025-05-04", "2025-05-04", "2025-05-05", "2025-05-05", "2025-05-05", "2025-05-05", "2025-05-05", "2025-05-05", "2025-05-06", "2025-05-06", "2025-05-06", "2025-05-06", "2025-05-06", "2025-05-06", "2025-05-07", "2025-05-07", "2025-05-07", "2025-05-07", "2025-05-07", "2025-05-07", "2025-05-08", "2025-05-08", "2025-05-08", "2025-05-08", "2025-05-08", "2025-05-08", "2025-05-09", "2025-05-09", "2025-05-09", "2025-05-09", "2025-05-09", "2025-05-09", "2025-05-10", "2025-05-10", "2025-05-10", "2025-05-10", "2025-05-10", "2025-05-10", "2025-05-11", "2025-05-11", "2025-05-11", "2025-05-11", "2025-05-11", "2025-05-11", "2025-05-12", "2025-05-12", "2025-05-12", "2025-05-12", "2025-05-12", "2025-05-12", "2025-05-13", "2025-05-13", "2025-05-13", "2025-05-13", "2025-05-13", "2025-05-13", "2025-05-14", "2025-05-14", "2025-05-14", "2025-05-14", "2025-05-14", "2025-05-14", "2025-05-15", "2025-05-15", "2025-05-15", "2025-05-15", "2025-05-15", "2025-05-15", "2025-05-16", "2025-05-16", "2025-05-16", "2025-05-16", "2025-05-16", "2025-05-16", "2025-05-17", "2025-05-17", "2025-05-17", "2025-05-17", "2025-05-17", "2025-05-17", "2025-05-18", "2025-05-18", "2025-05-18", "2025-05-18", "2025-05-18", "2025-05-18", "2025-05-19", "2025-05-19", "2025-05-19", "2025-05-19", "2025-05-19", "2025-05-19", "2025-05-20", "2025-05-20", "2025-05-20", "2025-05-20", "2025-05-20", "2025-05-20", "2025-05-21", "2025-05-21", "2025-05-21", "2025-05-21", "2025-05-21", "2025-05-21", "2025-05-22", "2025-05-22", "2025-05-22", "2025-05-22", "2025-05-22", "2025-05-22", "2025-05-23", "2025-05-23", "2025-05-23", "2025-05-23", "2025-05-23", "2025-05-23", "2025-05-24", "2025-05-24", "2025-05-24", "2025-05-24", "2025-05-24", "2025-05-24", "2025-05-25", "2025-05-25", "2025-05-25", "2025-05-25", "2025-05-25", "2025-05-25", "2025-05-26", "2025-05-26", "2025-05-26", "2025-05-26", "2025-05-26", "2025-05-26", "2025-05-27", "2025-05-27", "2025-05-27", "2025-05-27", "2025-05-27", "2025-05-27", "2025-05-28", "2025-05-28", "2025-05-28", "2025-05-28", "2025-05-28", "2025-05-28", "2025-05-29", "2025-05-29", "2025-05-29", "2025-05-29", "2025-05-29", "2025-05-29", "2025-05-30", "2025-05-30", "2025-05-30", "2025-05-30", "2025-05-30", "2025-05-30", "2025-05-31", "2025-05-31", "2025-05-31", "2025-05-31", "2025-05-31", "2025-05-31", "2025-06-01", "2025-06-01", "2025-06-01", "2025-06-01", "2025-06-01", "2025-06-01", "2025-06-02", "2025-06-02", "2025-06-02", "2025-06-02", "2025-06-02", "2025-06-02", "2025-06-03", "2025-06-03", "2025-06-03", "2025-06-03", "2025-06-03", "2025-06-03", "2025-06-04", "2025-06-04", "2025-06-04", "2025-06-04", "2025-06-04", "2025-06-04", "2025-06-05", "2025-06-05", "2025-06-05", "2025-06-05", "2025-06-05", "2025-06-05", "2025-06-06", "2025-06-06", "2025-06-06", "2025-06-06", "2025-06-06", "2025-06-06", "2025-06-07", "2025-06-07", "2025-06-07", "2025-06-07", "2025-06-07", "2025-06-07", "2025-06-08", "2025-06-08", "2025-06-08", "2025-06-08", "2025-06-08", "2025-06-08", "2025-06-09", "2025-06-09", "2025-06-09", "2025-06-09", "2025-06-09", "2025-06-09", "2025-06-10", "2025-06-10", "2025-06-10", "2025-06-10", "2025-06-10", "2025-06-10", "2025-06-11", "2025-06-11", "2025-06-11", "2025-06-11", "2025-06-11", "2025-06-11", "2025-06-12", "2025-06-12", "2025-06-12", "2025-06-12", "2025-06-12", "2025-06-12", "2025-06-13", "2025-06-13", "2025-06-13", "2025-06-13", "2025-06-13", "2025-06-13", "2025-06-14", "2025-06-14", "2025-06-14", "2025-06-14", "2025-06-14", "2025-06-14", "2025-06-15", "2025-06-15", "2025-06-15", "2025-06-15", "2025-06-15", "2025-06-15", "2025-06-16", "2025-06-16", "2025-06-16", "2025-06-16", "2025-06-16", "2025-06-16", "2025-06-17", "2025-06-17", "2025-06-17", "2025-06-17", "2025-06-17", "2025-06-17", "2025-06-18", "2025-06-18", "2025-06-18", "2025-06-18", "2025-06-18", "2025-06-18", "2025-06-19", "2025-06-19", "2025-06-19", "2025-06-19", "2025-06-19", "2025-06-19", "2025-06-20", "2025-06-20", "2025-06-20", "2025-06-20", "2025-06-20", "2025-06-20", "2025-06-21", "2025-06-21", "2025-06-21", "2025-06-21", "2025-06-21", "2025-06-21", "2025-06-22", "2025-06-22", "2025-06-22", "2025-06-22", "2025-06-22", "2025-06-22", "2025-06-23", "2025-06-23", "2025-06-23", "2025-06-23", "2025-06-23", "2025-06-23", "2025-06-24", "2025-06-24", "2025-06-24", "2025-06-24", "2025-06-24", "2025-06-24", "2025-06-25", "2025-06-25", "2025-06-25", "2025-06-25", "2025-06-25", "2025-06-25", "2025-06-26", "2025-06-26", "2025-06-26", "2025-06-26", "2025-06-26", "2025-06-26", "2025-06-27", "2025-06-27", "2025-06-27", "2025-06-27", "2025-06-27", "2025-06-27", "2025-06-28", "2025-06-28", "2025-06-28", "2025-06-28", "2025-06-28", "2025-06-28", "2025-06-29", "2025-06-29", "2025-06-29", "2025-06-29", "2025-06-29", "2025-06-29", "2025-06-30", "2025-06-30", "2025-06-30", "2025-06-30", "2025-06-30", "2025-06-30", "2025-07-01", "2025-07-01", "2025-07-01", "2025-07-01", "2025-07-01", "2025-07-01", "2025-07-02", "2025-07-02", "2025-07-02", "2025-07-02", "2025-07-02", "2025-07-02", "2025-07-03", "2025-07-03", "2025-07-03", "2025-07-03", "2025-07-03", "2025-07-03", "2025-07-04", "2025-07-04", "2025-07-04", "2025-07-04", "2025-07-04", "2025-07-04", "2025-07-05", "2025-07-05", "2025-07-05", "2025-07-05", "2025-07-05", "2025-07-05", "2025-07-06", "2025-07-06", "2025-07-06", "2025-07-06", "2025-07-06", "2025-07-06", "2025-07-07", "2025-07-07", "2025-07-07", "2025-07-07", "2025-07-07", "2025-07-07", "2025-07-08", "2025-07-08", "2025-07-08", "2025-07-08", "2025-07-08", "2025-07-08", "2025-07-09", "2025-07-09", "2025-07-09", "2025-07-09", "2025-07-09", "2025-07-09", "2025-07-10", "2025-07-10", "2025-07-10", "2025-07-10", "2025-07-10", "2025-07-10", "2025-07-11", "2025-07-11", "2025-07-11", "2025-07-11", "2025-07-11", "2025-07-11", "2025-07-12", "2025-07-12", "2025-07-12", "2025-07-12", "2025-07-12", "2025-07-12", "2025-07-13", "2025-07-13", "2025-07-13", "2025-07-13", "2025-07-13", "2025-07-13", "2025-07-14", "2025-07-14", "2025-07-14", "2025-07-14", "2025-07-14", "2025-07-14", "2025-07-15", "2025-07-15", "2025-07-15", "2025-07-15", "2025-07-15", "2025-07-15", "2025-07-16", "2025-07-16", "2025-07-16", "2025-07-16", "2025-07-16", "2025-07-16", "2025-07-17", "2025-07-17", "2025-07-17", "2025-07-17", "2025-07-17", "2025-07-17", "2025-07-18", "2025-07-18", "2025-07-18", "2025-07-18", "2025-07-18", "2025-07-18", "2025-07-19", "2025-07-19", "2025-07-19", "2025-07-19", "2025-07-19", "2025-07-19", "2025-07-20", "2025-07-20", "2025-07-20", "2025-07-20", "2025-07-20", "2025-07-20", "2025-07-21", "2025-07-21", "2025-07-21", "2025-07-21", "2025-07-21", "2025-07-21", "2025-07-22", "2025-07-22", "2025-07-22", "2025-07-22", "2025-07-22", "2025-07-22", "2025-07-23", "2025-07-23", "2025-07-23", "2025-07-23", "2025-07-23", "2025-07-23", "2025-07-24", "2025-07-24", "2025-07-24", "2025-07-24", "2025-07-24", "2025-07-24", "2025-07-25", "2025-07-25", "2025-07-25", "2025-07-25", "2025-07-25", "2025-07-25", "2025-07-26", "2025-07-26", "2025-07-26", "2025-07-26", "2025-07-26", "2025-07-26", "2025-07-27", "2025-07-27", "2025-07-27", "2025-07-27", "2025-07-27", "2025-07-27", "2025-07-28", "2025-07-28", "2025-07-28", "2025-07-28", "2025-07-28", "2025-07-28", "2025-07-29", "2025-07-29", "2025-07-29", "2025-07-29", "2025-07-29", "2025-07-29", "2025-07-30", "2025-07-30", "2025-07-30", "2025-07-30", "2025-07-30", "2025-07-30", "2025-07-31", "2025-07-31", "2025-07-31", "2025-07-31", "2025-07-31", "2025-07-31", "2025-08-01", "2025-08-01", "2025-08-01", "2025-08-01", "2025-08-01", "2025-08-01", "2025-08-02", "2025-08-02", "2025-08-02", "2025-08-02", "2025-08-02", "2025-08-02", "2025-08-03", "2025-08-03", "2025-08-03", "2025-08-03", "2025-08-03", "2025-08-03", "2025-08-04", "2025-08-04", "2025-08-04", "2025-08-04", "2025-08-04", "2025-08-04", "2025-08-05", "2025-08-05", "2025-08-05", "2025-08-05", "2025-08-05", "2025-08-05", "2025-08-06", "2025-08-06", "2025-08-06", "2025-08-06", "2025-08-06", "2025-08-06", "2025-08-07", "2025-08-07", "2025-08-07", "2025-08-07", "2025-08-07", "2025-08-07", "2025-08-08", "2025-08-08", "2025-08-08", "2025-08-08", "2025-08-08", "2025-08-08", "2025-08-09", "2025-08-09", "2025-08-09", "2025-08-09", "2025-08-09", "2025-08-09", "2025-08-10", "2025-08-10", "2025-08-10", "2025-08-10", "2025-08-10", "2025-08-10", "2025-08-11", "2025-08-11", "2025-08-11", "2025-08-11", "2025-08-11", "2025-08-11", "2025-08-12", "2025-08-12", "2025-08-12", "2025-08-12", "2025-08-12", "2025-08-12", "2025-08-13", "2025-08-13", "2025-08-13", "2025-08-13", "2025-08-13", "2025-08-13", "2025-08-14", "2025-08-14", "2025-08-14", "2025-08-14", "2025-08-14", "2025-08-14", "2025-08-15", "2025-08-15", "2025-08-15", "2025-08-15", "2025-08-15", "2025-08-15", "2025-08-16", "2025-08-16", "2025-08-16", "2025-08-16", "2025-08-16", "2025-08-16", "2025-08-17", "2025-08-17", "2025-08-17", "2025-08-17", "2025-08-17", "2025-08-17", "2025-08-18", "2025-08-18", "2025-08-18", "2025-08-18", "2025-08-18", "2025-08-18", "2025-08-19", "2025-08-19", "2025-08-19", "2025-08-19", "2025-08-19", "2025-08-19", "2025-08-20", "2025-08-20", "2025-08-20", "2025-08-20", "2025-08-20", "2025-08-20", "2025-08-21", "2025-08-21", "2025-08-21", "2025-08-21", "2025-08-21", "2025-08-21", "2025-08-22", "2025-08-22", "2025-08-22", "2025-08-22", "2025-08-22", "2025-08-22", "2025-08-23", "2025-08-23", "2025-08-23", "2025-08-23", "2025-08-23", "2025-08-23", "2025-08-24", "2025-08-24", "2025-08-24", "2025-08-24", "2025-08-24", "2025-08-24", "2025-08-25", "2025-08-25", "2025-08-25", "2025-08-25", "2025-08-25", "2025-08-25", "2025-08-26", "2025-08-26", "2025-08-26", "2025-08-26", "2025-08-26", "2025-08-26", "2025-08-27", "2025-08-27", "2025-08-27", "2025-08-27", "2025-08-27", "2025-08-27", "2025-08-28", "2025-08-28", "2025-08-28", "2025-08-28", "2025-08-28", "2025-08-28", "2025-08-29", "2025-08-29", "2025-08-29", "2025-08-29", "2025-08-29", "2025-08-29", "2025-08-30", "2025-08-30", "2025-08-30", "2025-08-30", "2025-08-30", "2025-08-30", "2025-08-31", "2025-08-31", "2025-08-31", "2025-08-31", "2025-08-31", "2025-08-31", "2025-09-01", "2025-09-01", "2025-09-01", "2025-09-01", "2025-09-01", "2025-09-01", "2025-09-02", "2025-09-02", "2025-09-02", "2025-09-02", "2025-09-02", "2025-09-02", "2025-09-03", "2025-09-03", "2025-09-03", "2025-09-03", "2025-09-03", "2025-09-03", "2025-09-04", "2025-09-04", "2025-09-04", "2025-09-04", "2025-09-04", "2025-09-04", "2025-09-05", "2025-09-05", "2025-09-05", "2025-09-05", "2025-09-05", "2025-09-05", "2025-09-06", "2025-09-06", "2025-09-06", "2025-09-06", "2025-09-06", "2025-09-06", "2025-09-07", "2025-09-07", "2025-09-07", "2025-09-07", "2025-09-07", "2025-09-07", "2025-09-08", "2025-09-08", "2025-09-08", "2025-09-08", "2025-09-08", "2025-09-08", "2025-09-09", "2025-09-09", "2025-09-09", "2025-09-09", "2025-09-09", "2025-09-09", "2025-09-10", "2025-09-10", "2025-09-10", "2025-09-10", "2025-09-10", "2025-09-10", "2025-09-11", "2025-09-11", "2025-09-11", "2025-09-11", "2025-09-11", "2025-09-11", "2025-09-12", "2025-09-12", "2025-09-12", "2025-09-12", "2025-09-12", "2025-09-12", "2025-09-13", "2025-09-13", "2025-09-13", "2025-09-13", "2025-09-13", "2025-09-13", "2025-09-14", "2025-09-14", "2025-09-14", "2025-09-14", "2025-09-14", "2025-09-14", "2025-09-15", "2025-09-15", "2025-09-15", "2025-09-15", "2025-09-15", "2025-09-15", "2025-09-16", "2025-09-16", "2025-09-16", "2025-09-16", "2025-09-16", "2025-09-16", "2025-09-17", "2025-09-17", "2025-09-17", "2025-09-17", "2025-09-17", "2025-09-17", "2025-09-18", "2025-09-18", "2025-09-18", "2025-09-18", "2025-09-18", "2025-09-18", "2025-09-19", "2025-09-19", "2025-09-19", "2025-09-19", "2025-09-19", "2025-09-19", "2025-09-20", "2025-09-20", "2025-09-20", "2025-09-20", "2025-09-20", "2025-09-20", "2025-09-21", "2025-09-21", "2025-09-21", "2025-09-21", "2025-09-21", "2025-09-21", "2025-09-22", "2025-09-22", "2025-09-22", "2025-09-22", "2025-09-22", "2025-09-22", "2025-09-23", "2025-09-23", "2025-09-23", "2025-09-23", "2025-09-23", "2025-09-23", "2025-09-24", "2025-09-24", "2025-09-24", "2025-09-24", "2025-09-24", "2025-09-24", "2025-09-25", "2025-09-25", "2025-09-25", "2025-09-25", "2025-09-25", "2025-09-25", "2025-09-26", "2025-09-26", "2025-09-26", "2025-09-26", "2025-09-26", "2025-09-26", "2025-09-27", "2025-09-27", "2025-09-27", "2025-09-27", "2025-09-27", "2025-09-27", "2025-09-28", "2025-09-28", "2025-09-28", "2025-09-28", "2025-09-28", "2025-09-28", "2025-09-29", "2025-09-29", "2025-09-29", "2025-09-29", "2025-09-29", "2025-09-29", "2025-09-30", "2025-09-30", "2025-09-30", "2025-09-30", "2025-09-30", "2025-09-30", "2025-10-01", "2025-10-01", "2025-10-01", "2025-10-01", "2025-10-01", "2025-10-01", "2025-10-02", "2025-10-02", "2025-10-02", "2025-10-02", "2025-10-02", "2025-10-02", "2025-10-03", "2025-10-03", "2025-10-03", "2025-10-03", "2025-10-03", "2025-10-03", "2025-10-04", "2025-10-04", "2025-10-04", "2025-10-04", "2025-10-04", "2025-10-04", "2025-10-05", "2025-10-05", "2025-10-05", "2025-10-05", "2025-10-05", "2025-10-05", "2025-10-06", "2025-10-06", "2025-10-06", "2025-10-06", "2025-10-06", "2025-10-06", "2025-10-07", "2025-10-07", "2025-10-07", "2025-10-07", "2025-10-07", "2025-10-07", "2025-10-08", "2025-10-08", "2025-10-08", "2025-10-08", "2025-10-08", "2025-10-08", "2025-10-09", "2025-10-09", "2025-10-09", "2025-10-09", "2025-10-09", "2025-10-09", "2025-10-10", "2025-10-10", "2025-10-10", "2025-10-10", "2025-10-10", "2025-10-10", "2025-10-11", "2025-10-11", "2025-10-11", "2025-10-11", "2025-10-11", "2025-10-11", "2025-10-12", "2025-10-12", "2025-10-12", "2025-10-12", "2025-10-12", "2025-10-12", "2025-10-13", "2025-10-13", "2025-10-13", "2025-10-13", "2025-10-13", "2025-10-13", "2025-10-14", "2025-10-14", "2025-10-14", "2025-10-14", "2025-10-14", "2025-10-14", "2025-10-15", "2025-10-15", "2025-10-15", "2025-10-15", "2025-10-15", "2025-10-15", "2025-10-16", "2025-10-16", "2025-10-16", "2025-10-16", "2025-10-16", "2025-10-16", "2025-10-17", "2025-10-17", "2025-10-17", "2025-10-17", "2025-10-17", "2025-10-17", "2025-10-18", "2025-10-18", "2025-10-18", "2025-10-18", "2025-10-18", "2025-10-18", "2025-10-19", "2025-10-19", "2025-10-19", "2025-10-19", "2025-10-19", "2025-10-19", "2025-10-20", "2025-10-20", "2025-10-20", "2025-10-20", "2025-10-20", "2025-10-20", "2025-10-21", "2025-10-21", "2025-10-21", "2025-10-21", "2025-10-21", "2025-10-21", "2025-10-22", "2025-10-22", "2025-10-22", "2025-10-22", "2025-10-22", "2025-10-22", "2025-10-23", "2025-10-23", "2025-10-23", "2025-10-23", "2025-10-23", "2025-10-23", "2025-10-24", "2025-10-24", "2025-10-24", "2025-10-24", "2025-10-24", "2025-10-24", "2025-10-25", "2025-10-25", "2025-10-25", "2025-10-25", "2025-10-25", "2025-10-25", "2025-10-26", "2025-10-26", "2025-10-26", "2025-10-26", "2025-10-26", "2025-10-26", "2025-10-27", "2025-10-27", "2025-10-27", "2025-10-27", "2025-10-27", "2025-10-27", "2025-10-28", "2025-10-28", "2025-10-28", "2025-10-28", "2025-10-28", "2025-10-28", "2025-10-29", "2025-10-29", "2025-10-29", "2025-10-29", "2025-10-29", "2025-10-29", "2025-10-30", "2025-10-30", "2025-10-30", "2025-10-30", "2025-10-30", "2025-10-30", "2025-10-31", "2025-10-31", "2025-10-31", "2025-10-31", "2025-10-31", "2025-10-31", "2025-11-01", "2025-11-01", "2025-11-01", "2025-11-01", "2025-11-01", "2025-11-01", "2025-11-02", "2025-11-02", "2025-11-02", "2025-11-02", "2025-11-02", "2025-11-02", "2025-11-03", "2025-11-03", "2025-11-03", "2025-11-03", "2025-11-03", "2025-11-03", "2025-11-04", "2025-11-04", "2025-11-04", "2025-11-04", "2025-11-04", "2025-11-04", "2025-11-05", "2025-11-05", "2025-11-05", "2025-11-05", "2025-11-05", "2025-11-05", "2025-11-06", "2025-11-06", "2025-11-06", "2025-11-06", "2025-11-06", "2025-11-06", "2025-11-07", "2025-11-07", "2025-11-07", "2025-11-07", "2025-11-07", "2025-11-07", "2025-11-08", "2025-11-08", "2025-11-08", "2025-11-08", "2025-11-08", "2025-11-08", "2025-11-09", "2025-11-09", "2025-11-09", "2025-11-09", "2025-11-09", "2025-11-09", "2025-11-10", "2025-11-10", "2025-11-10", "2025-11-10", "2025-11-10", "2025-11-10", "2025-11-11", "2025-11-11", "2025-11-11", "2025-11-11", "2025-11-11", "2025-11-11", "2025-11-12", "2025-11-12", "2025-11-12", "2025-11-12", "2025-11-12", "2025-11-12", "2025-11-13", "2025-11-13", "2025-11-13", "2025-11-13", "2025-11-13", "2025-11-13", "2025-11-14", "2025-11-14", "2025-11-14", "2025-11-14", "2025-11-14", "2025-11-14", "2025-11-15", "2025-11-15", "2025-11-15", "2025-11-15", "2025-11-15", "2025-11-15", "2025-11-16", "2025-11-16", "2025-11-16", "2025-11-16", "2025-11-16", "2025-11-16", "2025-11-17", "2025-11-17", "2025-11-17", "2025-11-17", "2025-11-17", "2025-11-17", "2025-11-18", "2025-11-18", "2025-11-18", "2025-11-18", "2025-11-18", "2025-11-18", "2025-11-19", "2025-11-19", "2025-11-19", "2025-11-19", "2025-11-19", "2025-11-19", "2025-11-20", "2025-11-20", "2025-11-20", "2025-11-20", "2025-11-20", "2025-11-20", "2025-11-21", "2025-11-21", "2025-11-21", "2025-11-21", "2025-11-21", "2025-11-21", "2025-11-22", "2025-11-22", "2025-11-22", "2025-11-22", "2025-11-22", "2025-11-22", "2025-11-23", "2025-11-23", "2025-11-23", "2025-11-23", "2025-11-23", "2025-11-23", "2025-11-24", "2025-11-24", "2025-11-24", "2025-11-24", "2025-11-24", "2025-11-24", "2025-11-25", "2025-11-25", "2025-11-25", "2025-11-25", "2025-11-25", "2025-11-25", "2025-11-26", "2025-11-26", "2025-11-26", "2025-11-26", "2025-11-26", "2025-11-26", "2025-11-27", "2025-11-27", "2025-11-27", "2025-11-27", "2025-11-27", "2025-11-27", "2025-11-28", "2025-11-28", "2025-11-28", "2025-11-28", "2025-11-28", "2025-11-28", "2025-11-29", "2025-11-29", "2025-11-29", "2025-11-29", "2025-11-29", "2025-11-29", "2025-11-30", "2025-11-30", "2025-11-30", "2025-11-30", "2025-11-30", "2025-11-30", "2025-12-01", "2025-12-01", "2025-12-01", "2025-12-01", "2025-12-01", "2025-12-01", "2025-12-02", "2025-12-02", "2025-12-02", "2025-12-02", "2025-12-02", "2025-12-02", "2025-12-03", "2025-12-03", "2025-12-03", "2025-12-03", "2025-12-03", "2025-12-03", "2025-12-04", "2025-12-04", "2025-12-04", "2025-12-04", "2025-12-04", "2025-12-04", "2025-12-05", "2025-12-05", "2025-12-05", "2025-12-05", "2025-12-05", "2025-12-05", "2025-12-06", "2025-12-06", "2025-12-06", "2025-12-06", "2025-12-06", "2025-12-06", "2025-12-07", "2025-12-07", "2025-12-07", "2025-12-07", "2025-12-07", "2025-12-07", "2025-12-08", "2025-12-08", "2025-12-08", "2025-12-08", "2025-12-08", "2025-12-08", "2025-12-09", "2025-12-09", "2025-12-09", "2025-12-09", "2025-12-09", "2025-12-09", "2025-12-10", "2025-12-10", "2025-12-10", "2025-12-10", "2025-12-10", "2025-12-10", "2025-12-11", "2025-12-11", "2025-12-11", "2025-12-11", "2025-12-11", "2025-12-11", "2025-12-12", "2025-12-12", "2025-12-12", "2025-12-12", "2025-12-12", "2025-12-12", "2025-12-13", "2025-12-13", "2025-12-13", "2025-12-13", "2025-12-13", "2025-12-13", "2025-12-14", "2025-12-14", "2025-12-14", "2025-12-14", "2025-12-14", "2025-12-14", "2025-12-15", "2025-12-15", "2025-12-15", "2025-12-15", "2025-12-15", "2025-12-15", "2025-12-16", "2025-12-16", "2025-12-16", "2025-12-16", "2025-12-16", "2025-12-16", "2025-12-17", "2025-12-17", "2025-12-17", "2025-12-17", "2025-12-17", "2025-12-17", "2025-12-18", "2025-12-18", "2025-12-18", "2025-12-18", "2025-12-18", "2025-12-18", "2025-12-19", "2025-12-19", "2025-12-19", "2025-12-19", "2025-12-19", "2025-12-19", "2025-12-20", "2025-12-20", "2025-12-20", "2025-12-20", "2025-12-20", "2025-12-20", "2025-12-21", "2025-12-21", "2025-12-21", "2025-12-21", "2025-12-21", "2025-12-21", "2025-12-22", "2025-12-22", "2025-12-22", "2025-12-22", "2025-12-22", "2025-12-22", "2025-12-23", "2025-12-23", "2025-12-23", "2025-12-23", "2025-12-23", "2025-12-23", "2025-12-24", "2025-12-24", "2025-12-24", "2025-12-24", "2025-12-24", "2025-12-24", "2025-12-25", "2025-12-25", "2025-12-25", "2025-12-25", "2025-12-25", "2025-12-25", "2025-12-26", "2025-12-26", "2025-12-26", "2025-12-26", "2025-12-26", "2025-12-26", "2025-12-27", "2025-12-27", "2025-12-27", "2025-12-27", "2025-12-27", "2025-12-27", "2025-12-28", "2025-12-28", "2025-12-28", "2025-12-28", "2025-12-28", "2025-12-28", "2025-12-29", "2025-12-29", "2025-12-29", "2025-12-29", "2025-12-29", "2025-12-29", "2025-12-30", "2025-12-30", "2025-12-30", "2025-12-30", "2025-12-30", "2025-12-30", "2025-12-31", "2025-12-31", "2025-12-31", "2025-12-31", "2025-12-31", "2025-12-31", "2026-01-01", "2026-01-01", "2026-01-01", "2026-01-01", "2026-01-01", "2026-01-01", "2026-01-02", "2026-01-02", "2026-01-02", "2026-01-02", "2026-01-02", "2026-01-02", "2026-01-03", "2026-01-03", "2026-01-03", "2026-01-03", "2026-01-03", "2026-01-03", "2026-01-04", "2026-01-04", "2026-01-04", "2026-01-04", "2026-01-04", "2026-01-04", "2026-01-05", "2026-01-05", "2026-01-05", "2026-01-05", "2026-01-05", "2026-01-05", "2026-01-06", "2026-01-06", "2026-01-06", "2026-01-06", "2026-01-06", "2026-01-06", "2026-01-07", "2026-01-07", "2026-01-07", "2026-01-07", "2026-01-07", "2026-01-07", "2026-01-08", "2026-01-08", "2026-01-08", "2026-01-08", "2026-01-08", "2026-01-08", "2026-01-09", "2026-01-09", "2026-01-09", "2026-01-09", "2026-01-09", "2026-01-09", "2026-01-10", "2026-01-10", "2026-01-10", "2026-01-10", "2026-01-10", "2026-01-10", "2026-01-11", "2026-01-11", "2026-01-11", "2026-01-11", "2026-01-11", "2026-01-11", "2026-01-12", "2026-01-12", "2026-01-12", "2026-01-12", "2026-01-12", "2026-01-12", "2026-01-13", "2026-01-13", "2026-01-13", "2026-01-13", "2026-01-13", "2026-01-13", "2026-01-14", "2026-01-14", "2026-01-14", "2026-01-14", "2026-01-14", "2026-01-14", "2026-01-15", "2026-01-15", "2026-01-15", "2026-01-15", "2026-01-15", "2026-01-15", "2026-01-16", "2026-01-16", "2026-01-16", "2026-01-16", "2026-01-16", "2026-01-16", "2026-01-17", "2026-01-17", "2026-01-17", "2026-01-17", "2026-01-17", "2026-01-17", "2026-01-18", "2026-01-18", "2026-01-18", "2026-01-18", "2026-01-18", "2026-01-18", "2026-01-19", "2026-01-19", "2026-01-19", "2026-01-19", "2026-01-19", "2026-01-19", "2026-01-20", "2026-01-20", "2026-01-20", "2026-01-20", "2026-01-20", "2026-01-20", "2026-01-21", "2026-01-21", "2026-01-21", "2026-01-21", "2026-01-21", "2026-01-21", "2026-01-22", "2026-01-22", "2026-01-22", "2026-01-22", "2026-01-22", "2026-01-22", "2026-01-23", "2026-01-23", "2026-01-23", "2026-01-23", "2026-01-23", "2026-01-23", "2026-01-24", "2026-01-24", "2026-01-24", "2026-01-24", "2026-01-24", "2026-01-24", "2026-01-25", "2026-01-25", "2026-01-25", "2026-01-25", "2026-01-25", "2026-01-25", "2026-01-26", "2026-01-26", "2026-01-26", "2026-01-26", "2026-01-26", "2026-01-26", "2026-01-27", "2026-01-27", "2026-01-27", "2026-01-27", "2026-01-27", "2026-01-27", "2026-01-28", "2026-01-28", "2026-01-28", "2026-01-28", "2026-01-28", "2026-01-28", "2026-01-29", "2026-01-29", "2026-01-29", "2026-01-29", "2026-01-29", "2026-01-29", "2026-01-30", "2026-01-30", "2026-01-30", "2026-01-30", "2026-01-30", "2026-01-30", "2026-01-31", "2026-01-31", "2026-01-31", "2026-01-31", "2026-01-31", "2026-01-31", "2026-02-01", "2026-02-01", "2026-02-01", "2026-02-01", "2026-02-01", "2026-02-01", "2026-02-02", "2026-02-02", "2026-02-02", "2026-02-02", "2026-02-02", "2026-02-02", "2026-02-03", "2026-02-03", "2026-02-03", "2026-02-03", "2026-02-03", "2026-02-03", "2026-02-04", "2026-02-04", "2026-02-04", "2026-02-04", "2026-02-04", "2026-02-04", "2026-02-05", "2026-02-05", "2026-02-05", "2026-02-05", "2026-02-05", "2026-02-05", "2026-02-06", "2026-02-06", "2026-02-06", "2026-02-06", "2026-02-06", "2026-02-06", "2026-02-07", "2026-02-07", "2026-02-07", "2026-02-07", "2026-02-07", "2026-02-07", "2026-02-08", "2026-02-08", "2026-02-08", "2026-02-08", "2026-02-08", "2026-02-08", "2026-02-09", "2026-02-09", "2026-02-09", "2026-02-09", "2026-02-09", "2026-02-09", "2026-02-10", "2026-02-10", "2026-02-10", "2026-02-10", "2026-02-10", "2026-02-10", "2026-02-11", "2026-02-11", "2026-02-11", "2026-02-11", "2026-02-11", "2026-02-11", "2026-02-12", "2026-02-12", "2026-02-12", "2026-02-12", "2026-02-12", "2026-02-12", "2026-02-13", "2026-02-13", "2026-02-13", "2026-02-13", "2026-02-13", "2026-02-13", "2026-02-14", "2026-02-14", "2026-02-14", "2026-02-14", "2026-02-14", "2026-02-14", "2026-02-15", "2026-02-15", "2026-02-15", "2026-02-15", "2026-02-15", "2026-02-15", "2026-02-16", "2026-02-16", "2026-02-16", "2026-02-16", "2026-02-16", "2026-02-16", "2026-02-17", "2026-02-17", "2026-02-17", "2026-02-17", "2026-02-17", "2026-02-17", "2026-02-18", "2026-02-18", "2026-02-18", "2026-02-18", "2026-02-18"],
+    datasets: [{
+      label: 'Drawdown (%)',
+      data: [0.0, 0.04, 0.03, 0.06, 0.06, 0.07, 0.06, 0.07, 0.06, 0.04, 0.03, 0.02, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.01, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.03, 0.03, 0.05, 0.05, 0.07, 0.07, 0.06, 0.05, 0.05, 0.04, 0.03, 0.02, 0.01, 0.01, 0.02, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.02, 0.03, 0.02, 0.02, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.01, 0.01, 0.0, 0.0, 0.0, 0.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.02, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.03, 0.02, 0.02, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.01, 0.0, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.01, 0.03, 0.03, 0.02, 0.02, 0.01, 0.01, 0.01, 0.0, 0.02, 0.03, 0.03, 0.03, 0.04, 0.04, 0.04, 0.03, 0.03, 0.02, 0.02, 0.01, 0.02, 0.02, 0.03, 0.02, 0.02, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.04, 0.04, 0.03, 0.03, 0.03, 0.02, 0.02, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.02, 0.04, 0.03, 0.04, 0.04, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.05, 0.06, 0.06, 0.07, 0.09, 0.14, 0.14, 0.14, 0.14, 0.15, 0.16, 0.17, 0.17, 0.18, 0.19, 0.2, 0.2, 0.21, 0.2, 0.2, 0.19, 0.23, 0.22, 0.21, 0.2, 0.19, 0.17, 0.16, 0.16, 0.14, 0.13, 0.12, 0.11, 0.1, 0.08, 0.07, 0.06, 0.05, 0.03, 0.02, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.01, 0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.01, 0.02, 0.02, 0.02, 0.02, 0.03, 0.02, 0.02, 0.01, 0.03, 0.02, 0.02, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.03, 0.03, 0.03, 0.02, 0.02, 0.02, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.03, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.03, 0.03, 0.03, 0.04, 0.06, 0.07, 0.09, 0.09, 0.1, 0.1, 0.1, 0.09, 0.1, 0.1, 0.09, 0.09, 0.08, 0.08, 0.1, 0.09, 0.09, 0.08, 0.1, 0.09, 0.11, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.09, 0.09, 0.09, 0.08, 0.08, 0.1, 0.1, 0.11, 0.1, 0.1, 0.09, 0.08, 0.08, 0.07, 0.07, 0.06, 0.06, 0.05, 0.04, 0.04, 0.03, 0.04, 0.04, 0.06, 0.06, 0.05, 0.05, 0.04, 0.04, 0.03, 0.03, 0.02, 0.02, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.02, 0.02, 0.02, 0.02, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.03, 0.02, 0.02, 0.02, 0.02, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.01, 0.02, 0.02, 0.01, 0.01, 0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.03, 0.03, 0.02, 0.01, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.01, 0.02, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.03, 0.02, 0.02, 0.02, 0.01, 0.01, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.01, 0.04, 0.03, 0.04, 0.04, 0.04, 0.04, 0.04, 0.04, 0.04, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.07, 0.07, 0.06, 0.05, 0.05, 0.04, 0.04, 0.04, 0.03, 0.03, 0.03, 0.02, 0.02, 0.02, 0.01, 0.01, 0.02, 0.01, 0.02, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.02, 0.12, 0.14, 0.16, 0.17, 0.17, 0.17, 0.17, 0.17, 0.19, 0.19, 0.18, 0.18, 0.17, 0.16, 0.17, 0.17, 0.17, 0.17, 0.19, 0.18, 0.18, 0.18, 0.19, 0.19, 0.19, 0.19, 0.18, 0.19, 0.23, 0.27, 0.3, 0.31, 0.31, 0.31, 0.32, 0.32, 0.35, 0.37, 0.37, 0.37, 0.4, 0.41, 0.41, 0.42, 0.43, 0.44, 0.46, 0.47, 0.47, 0.48, 0.5, 0.51, 0.51, 0.52, 0.53, 0.53, 0.55, 0.54, 0.55, 0.54, 0.54, 0.54, 0.54, 0.54, 0.56, 0.55, 0.55, 0.55, 0.57, 0.59, 0.6, 0.6, 0.61, 0.62, 0.63, 0.63, 0.62, 0.63, 0.63, 0.63, 0.63, 0.63, 0.63, 0.63, 0.63, 0.64, 0.64, 0.65, 0.64, 0.65, 0.64, 0.64, 0.64, 0.64, 0.63, 0.63, 0.63, 0.62, 0.62, 0.61, 0.61, 0.61, 0.61, 0.61, 0.61, 0.61, 0.61, 0.6, 0.64, 0.65, 0.65, 0.65, 0.66, 0.65, 0.65, 0.65, 0.65, 0.66, 0.68, 0.72, 0.77, 0.81, 0.83, 0.84, 0.84, 0.83, 0.86, 0.85, 0.85, 0.84, 0.83, 0.82, 0.81, 0.81, 0.8, 0.79, 0.78, 0.78, 0.77, 0.77, 0.77, 0.77, 0.77, 0.77, 0.79, 0.78, 0.77, 0.77, 0.76, 0.76, 0.75, 0.74, 0.74, 0.73, 0.72, 0.71, 0.7, 0.69, 0.68, 0.68, 0.67, 0.65, 0.63, 0.6, 0.58, 0.56, 0.55, 0.54, 0.57, 0.56, 0.56, 0.55, 0.55, 0.54, 0.54, 0.53, 0.53, 0.52, 0.52, 0.51, 0.51, 0.5, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.52, 0.52, 0.51, 0.51, 0.5, 0.5, 0.49, 0.49, 0.48, 0.48, 0.49, 0.49, 0.48, 0.48, 0.48, 0.48, 0.5, 0.5, 0.49, 0.49, 0.49, 0.49, 0.5, 0.5, 0.49, 0.49, 0.48, 0.48, 0.5, 0.49, 0.49, 0.48, 0.48, 0.48, 0.48, 0.47, 0.47, 0.46, 0.46, 0.45, 0.45, 0.44, 0.44, 0.43, 0.42, 0.42, 0.41, 0.4, 0.4, 0.39, 0.38, 0.38, 0.4, 0.39, 0.38, 0.38, 0.37, 0.37, 0.36, 0.36, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.34, 0.34, 0.36, 0.35, 0.35, 0.36, 0.36, 0.36, 0.36, 0.35, 0.37, 0.37, 0.36, 0.36, 0.35, 0.34, 0.34, 0.33, 0.33, 0.32, 0.32, 0.31, 0.31, 0.3, 0.3, 0.29, 0.29, 0.28, 0.27, 0.27, 0.26, 0.25, 0.25, 0.24, 0.23, 0.23, 0.22, 0.21, 0.21, 0.2, 0.2, 0.19, 0.19, 0.18, 0.2, 0.22, 0.23, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.25, 0.25, 0.25, 0.26, 0.26, 0.26, 0.27, 0.27, 0.29, 0.29, 0.3, 0.31, 0.31, 0.31, 0.31, 0.31, 0.3, 0.3, 0.32, 0.31, 0.3, 0.29, 0.28, 0.27, 0.26, 0.26, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.24, 0.25, 0.38, 0.53, 0.62, 0.73, 0.8, 0.85, 0.91, 0.98, 1.0, 1.0, 1.01, 1.02, 1.02, 1.02, 1.02, 1.01, 1.04, 1.03, 1.03, 1.02, 1.02, 1.02, 1.02, 1.01, 1.02, 1.02, 1.03, 1.01, 1.0, 1.0, 1.0, 1.0, 1.02, 1.02, 1.02, 1.02, 1.02, 1.02, 1.03, 1.02, 1.02, 1.02, 1.02, 1.02, 1.02, 1.02, 1.01, 1.01, 1.05, 1.04, 1.04, 1.04, 1.05, 1.05, 1.05, 1.05, 1.05, 1.05, 1.04, 1.04, 1.07, 1.07, 1.07, 1.06, 1.06, 1.06, 1.06, 1.06, 1.07, 1.07, 1.07, 1.06, 1.07, 1.07, 1.07, 1.06, 1.06, 1.06, 1.08, 1.08, 1.08, 1.08, 1.08, 1.08, 1.07, 1.07, 1.07, 1.07, 1.08, 1.08, 1.09, 1.08, 1.08, 1.08, 1.08, 1.08, 1.07, 1.07, 1.07, 1.06, 1.06, 1.05, 1.05, 1.05, 1.05, 1.06, 1.06, 1.05, 1.05, 1.05, 1.04, 1.04, 1.06, 1.05, 1.05, 1.05, 1.04, 1.04, 1.04, 1.03, 1.03, 1.02, 1.02, 1.02, 1.01, 1.01, 1.0, 0.99, 0.99, 0.98, 0.98, 0.97, 0.97, 0.97, 0.96, 0.96, 0.96, 0.95, 0.95, 0.95, 0.95, 0.95, 0.94, 0.94, 0.94, 0.93, 0.93, 0.93, 0.92, 0.92, 0.93, 0.93, 0.93, 0.93, 0.92, 0.92, 0.92, 0.91, 0.91, 0.91, 0.9, 0.9, 0.9, 0.89, 0.89, 0.88, 0.88, 0.87, 0.87, 0.87, 0.86, 0.86, 0.85, 0.85, 0.84, 0.84, 0.85, 0.84, 0.85, 0.84, 0.86, 0.85, 0.84, 0.83, 0.83, 0.82, 0.82, 0.81, 0.81, 0.8, 0.82, 0.83, 0.84, 0.85, 0.86, 0.86, 0.86, 0.87, 0.89, 0.9, 0.9, 0.91, 0.92, 0.91, 0.92, 0.92, 0.93, 0.93, 0.95, 0.94, 0.94, 0.94, 0.93, 0.92, 0.92, 0.91, 0.91, 0.9, 0.9, 0.89, 0.89, 0.89, 0.9, 0.9, 0.89, 0.88, 0.88, 0.88, 0.87, 0.87, 0.87, 0.86, 0.86, 0.85, 0.84, 0.84, 0.83, 0.83, 0.82, 0.82, 0.82, 0.82, 0.81, 0.81, 0.82, 0.82, 0.82, 0.82, 0.82, 0.82, 0.82, 0.81, 0.81, 0.81, 0.81, 0.81, 0.81, 0.81, 0.81, 0.82, 0.83, 0.84, 0.85, 0.85, 0.86, 0.85, 0.86, 0.88, 0.93, 0.97, 0.99, 0.99, 1.0, 1.01, 1.03, 1.04, 1.05, 1.06, 1.06, 1.06, 1.08, 1.1, 1.11, 1.11, 1.11, 1.12, 1.13, 1.15, 1.17, 1.18, 1.18, 1.19, 1.2, 1.21, 1.21, 1.21, 1.21, 1.21, 1.23, 1.24, 1.29, 1.3, 1.3, 1.29, 1.29, 1.28, 1.28, 1.27, 1.27, 1.26, 1.25, 1.25, 1.26, 1.26, 1.25, 1.25, 1.25, 1.25, 1.25, 1.24, 1.24, 1.23, 1.23, 1.23, 1.23, 1.23, 1.22, 1.22, 1.24, 1.24, 1.23, 1.22, 1.23, 1.23, 1.23, 1.23, 1.24, 1.24, 1.24, 1.23, 1.22, 1.22, 1.21, 1.21, 1.21, 1.21, 1.21, 1.2, 1.19, 1.18, 1.17, 1.16, 1.16, 1.16, 1.15, 1.15, 1.14, 1.14, 1.13, 1.13, 1.13, 1.12, 1.12, 1.11, 1.1, 1.1, 1.09, 1.08, 1.07, 1.06, 1.05, 1.04, 1.03, 1.02, 1.02, 1.01, 1.0, 0.99, 0.98, 0.98, 0.97, 0.96, 0.95, 0.94, 0.94, 0.93, 0.92, 0.91, 0.9, 0.9, 0.89, 0.88, 0.88, 0.87, 0.86, 0.86, 0.85, 0.84, 0.84, 0.83, 0.82, 0.81, 0.83, 0.82, 0.82, 0.81, 0.8, 0.8, 0.79, 0.78, 0.78, 0.77, 0.76, 0.76, 0.75, 0.75, 0.74, 0.74, 0.76, 0.76, 0.77, 0.79, 0.79, 0.8, 0.81, 0.81, 0.82, 0.83, 0.85, 0.87, 0.88, 0.88, 0.9, 0.9, 0.92, 0.93, 0.93, 0.94, 0.95, 0.96, 0.95, 0.95, 0.95],
+      borderColor: '#ff6b6b', backgroundColor: 'rgba(255,107,107,0.1)',
+      fill: true, pointRadius: 0, borderWidth: 2,
+    }]
+  },
+  options: chartOpts,
+});
+
+// Per-coin
+new Chart(document.getElementById('coinChart'), {
+  type: 'bar',
+  data: {
+    labels: ["PNUT", "BNB", "XRP", "LINK", "SUI", "AVAX", "SOL", "PLATINUM", "BTC", "ETH", "MOODENG"],
+    datasets: [{
+      label: 'P&L ($)',
+      data: [2325.62, 1693.93, 886.61, 816.46, 770.95, 577.25, 532.11, 73.72, 65.5, -104.49, -2205.51],
+      backgroundColor: ["#00d4aa", "#00d4aa", "#00d4aa", "#00d4aa", "#00d4aa", "#00d4aa", "#00d4aa", "#00d4aa", "#00d4aa", "#ff6b6b", "#ff6b6b"],
+    }]
+  },
+  options: chartOpts,
+});
+
+// Monthly
+new Chart(document.getElementById('monthChart'), {
+  type: 'bar',
+  data: {
+    labels: ["2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02"],
+    datasets: [{
+      label: 'Return (%)',
+      data: [0.32, 1.31, 0.85, 1.06, 1.12, 0.55, 0.41, 0.49, -0.66, 0.62, -0.71, -0.31, 0.28],
+      backgroundColor: ["#00d4aa", "#00d4aa", "#00d4aa", "#00d4aa", "#00d4aa", "#00d4aa", "#00d4aa", "#00d4aa", "#ff6b6b", "#00d4aa", "#ff6b6b", "#ff6b6b", "#00d4aa"],
+    }]
+  },
+  options: chartOpts,
+});
+</script>
+</body>
+</html>
